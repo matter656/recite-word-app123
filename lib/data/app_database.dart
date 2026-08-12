@@ -8,7 +8,7 @@ import 'package:sqflite/sqflite.dart'
 /// [databaseFactory] 与 [path] 可注入，测试时用 sqflite_common_ffi 的内存库。
 class AppDatabase {
   static const _dbName = 'vocab_app.db';
-  static const _dbVersion = 1;
+  static const _dbVersion = 2;
 
   final DatabaseFactory? databaseFactory;
   final String? path;
@@ -29,8 +29,25 @@ class AppDatabase {
         await db.execute('PRAGMA foreign_keys = ON');
       },
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     ));
     return db;
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        CREATE TABLE essay_drafts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          exam_id TEXT NOT NULL,
+          topic_id TEXT NOT NULL,
+          prompt TEXT NOT NULL DEFAULT '',
+          content TEXT NOT NULL,
+          word_count INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL
+        )
+      ''');
+    }
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -79,6 +96,17 @@ class AppDatabase {
       )
     ''');
     await db.execute('CREATE INDEX idx_logs_date ON study_logs(date)');
+    await db.execute('''
+      CREATE TABLE essay_drafts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        exam_id TEXT NOT NULL,
+        topic_id TEXT NOT NULL,
+        prompt TEXT NOT NULL DEFAULT '',
+        content TEXT NOT NULL,
+        word_count INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL
+      )
+    ''');
   }
 
   Future<void> close() async {

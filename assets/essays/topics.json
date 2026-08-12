@@ -1,0 +1,87 @@
+{
+  "exams": [
+    {
+      "id": "kaoyan",
+      "name": "考研英语",
+      "description": "英语一 / 英语二写作（大作文 + 小作文）",
+      "topics": [
+        {
+          "id": "picture",
+          "name": "图画作文（大作文）",
+          "description": "英语一大作文：描述图画 → 阐释寓意 → 联系现实",
+          "practicePrompts": [
+            "Directions: Write an essay of 160-200 words based on the following drawing. In your essay, you should 1) describe the drawing briefly, 2) explain its intended meaning, and 3) give your comments.（主题：坚持与奋斗）",
+            "Directions: Write an essay of 160-200 words based on the following drawing.（主题：合作与团队精神）"
+          ]
+        },
+        {
+          "id": "chart",
+          "name": "图表作文（大作文）",
+          "description": "英语二大作文：描述数据 → 分析原因 → 总结趋势",
+          "practicePrompts": [
+            "Directions: Write an essay of 150 words based on the following chart. You should 1) interpret the chart, and 2) give your comments.（主题：某城市居民出游方式占比变化）",
+            "Directions: Write an essay of 150 words based on the following chart.（主题：大学生日均使用手机时长变化）"
+          ]
+        },
+        {
+          "id": "letter",
+          "name": "书信（小作文）",
+          "description": "邀请信、建议信、感谢信、道歉信等应用文",
+          "practicePrompts": [
+            "Directions: Write an email to a foreign friend who is coming to visit China, recommending one place you think is worth visiting. You should write about 100 words.",
+            "Directions: Write a letter to the manager of a library to make some suggestions on improving its service. You should write about 100 words."
+          ]
+        },
+        {
+          "id": "notice",
+          "name": "通知（小作文）",
+          "description": "活动通知、讲座通知等",
+          "practicePrompts": [
+            "Directions: The Student Union is going to hold a lecture on English learning. Write a notice to announce the lecture. You should write about 100 words."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cet",
+      "name": "大学英语四六级",
+      "description": "四六级写作：议论文 / 现象分析 / 应用文 / 图表作文",
+      "topics": [
+        {
+          "id": "argumentation",
+          "name": "议论文",
+          "description": "就某一话题表明观点并论证（最常见题型）",
+          "practicePrompts": [
+            "Directions: For this part, you are allowed 30 minutes to write an essay on the importance of developing a good habit of reading. You should write at least 120 words but no more than 180 words.",
+            "Directions: For this part, you are allowed 30 minutes to write an essay on the necessity of taking part in physical exercise. You should write at least 120 words but no more than 180 words."
+          ]
+        },
+        {
+          "id": "phenomenon",
+          "name": "现象分析",
+          "description": "分析社会现象的原因与影响",
+          "practicePrompts": [
+            "Directions: For this part, you are allowed 30 minutes to write an essay on the phenomenon of online learning becoming increasingly popular. You should write at least 120 words but no more than 180 words.",
+            "Directions: For this part, you are allowed 30 minutes to write an essay on the phenomenon that many young people like to share their lives on social media. You should write at least 120 words but no more than 180 words."
+          ]
+        },
+        {
+          "id": "cet_letter",
+          "name": "应用文（书信）",
+          "description": "建议信、申请信、邀请信等",
+          "practicePrompts": [
+            "Directions: For this part, you are allowed 30 minutes to write a letter to your friend to suggest one way to improve their English listening. You should write at least 120 words but no more than 180 words."
+          ]
+        },
+        {
+          "id": "cet_chart",
+          "name": "图表作文",
+          "description": "描述图表数据并分析",
+          "practicePrompts": [
+            "Directions: For this part, you are allowed 30 minutes to write an essay based on the following chart, which shows the change in the number of students choosing to study abroad in your university. You should write at least 120 words but no more than 180 words."
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,260 @@
+{
+  "picture": {
+    "title": "图画作文模板（英语一）",
+    "parts": [
+      {
+        "name": "开头段 · 描述图画",
+        "sentences": [
+          "As is symbolically depicted in the picture, ...",
+          "As is vividly shown in the cartoon above, ...",
+          "The drawing portrays a thought-provoking scene in which ...",
+          "What strikes me most in the picture is that ..."
+        ]
+      },
+      {
+        "name": "主体段 · 阐释寓意",
+        "sentences": [
+          "The picture is intended to convey the message that ...",
+          "Undoubtedly, the cartoonist aims to remind us of the importance of ...",
+          "Simple as the picture is, its symbolic meaning is profound and far-reaching.",
+          "This phenomenon can be attributed to the following factors. To begin with, ... Furthermore, ...",
+          "Take the case of ... as an example, who/which ..."
+        ]
+      },
+      {
+        "name": "结尾段 · 总结升华",
+        "sentences": [
+          "In conclusion, it is high time that we took measures to ...",
+          "From my perspective, we should attach great importance to ... and act accordingly.",
+          "Only in this way can we ... and embrace a brighter future.",
+          "To sum up, ... is not merely a personal choice but a social responsibility."
+        ]
+      }
+    ],
+    "fullTemplate": "As is symbolically depicted in the picture, ______. \n\nThe picture is intended to convey the message that ______. Undoubtedly, the cartoonist aims to remind us of the importance of ______. Take the case of ______ as an example. This phenomenon can be attributed to the following factors. To begin with, ______. Furthermore, ______.\n\nIn conclusion, it is high time that we took measures to ______. From my perspective, we should attach great importance to ______ and act accordingly. Only in this way can we embrace a brighter future."
+  },
+  "chart": {
+    "title": "图表作文模板（英语二）",
+    "parts": [
+      {
+        "name": "开头段 · 描述数据",
+        "sentences": [
+          "As is illustrated in the chart above, ______ witnessed a remarkable increase/decline from ______ in ______ to ______ in ______.",
+          "The chart clearly reveals that the proportion/number of ______ has risen/fallen dramatically over the past few years.",
+          "According to the statistics given in the chart, ______ account(s) for ______ percent.",
+          "What is worth noticing is that ______ has become the dominant factor/trend."
+        ]
+      },
+      {
+        "name": "主体段 · 分析原因",
+        "sentences": [
+          "Several factors may account for this trend. To begin with, ______. Moreover, ______. Last but not least, ______.",
+          "This change is mainly due to the rapid development of ______ and the improvement of ______.",
+          "The underlying reasons are not far to seek. On the one hand, ______. On the other hand, ______.",
+          "Economic growth and technological progress are two major contributors to this phenomenon."
+        ]
+      },
+      {
+        "name": "结尾段 · 预测与总结",
+        "sentences": [
+          "Considering the current trend, it is reasonable to predict that ______ will continue to ______ in the years to come.",
+          "In a nutshell, this trend reflects the overall progress of our society, and we should respond to it with positive actions.",
+          "To conclude, ______ is a double-edged sword, and we should make the best use of it while guarding against its drawbacks."
+        ]
+      }
+    ],
+    "fullTemplate": "As is illustrated in the chart above, ______ witnessed a remarkable change from ______ to ______.\n\nSeveral factors may account for this trend. To begin with, ______. Moreover, ______. Last but not least, ______.\n\nConsidering the current trend, it is reasonable to predict that ______ will continue to ______ in the years to come. In a nutshell, this trend reflects the overall progress of our society, and we should respond to it with positive actions."
+  },
+  "letter": {
+    "title": "书信模板（小作文）",
+    "parts": [
+      {
+        "name": "称呼与开头",
+        "sentences": [
+          "Dear Sir or Madam,",
+          "Dear Professor / Dear Manager / Dear Friend,",
+          "I am writing this letter/email to ... (invite you to / make some suggestions about / express my sincere thanks for ...)"
+        ]
+      },
+      {
+        "name": "正文 · 具体内容",
+        "sentences": [
+          "The reason why I make this suggestion/invitation is that ...",
+          "I would appreciate it if you could ...",
+          "Here are some details about ...: ...",
+          "First of all, ... Besides, ... What's more, ...",
+          "I am confident that ... will not only ... but also ..."
+        ]
+      },
+      {
+        "name": "结尾与落款",
+        "sentences": [
+          "I would be grateful if you could take my suggestion into consideration.",
+          "Looking forward to your early reply.",
+          "Thank you for your time and consideration.",
+          "Yours sincerely, / Yours faithfully,"
+        ]
+      }
+    ],
+    "fullTemplate": "Dear ______,\n\nI am writing this letter to ______. The reason why I do so is that ______.\n\nFirst of all, ______. Besides, ______. What's more, ______. I would appreciate it if you could ______.\n\nLooking forward to your early reply.\n\nYours sincerely,\nLi Ming"
+  },
+  "notice": {
+    "title": "通知模板（小作文）",
+    "parts": [
+      {
+        "name": "标题与活动信息",
+        "sentences": [
+          "NOTICE",
+          "In order to ______, our department/union is going to hold ______.",
+          "The activity will be held at ______ from ______ to ______.",
+          "Anyone who is interested in it is warmly welcome."
+        ]
+      },
+      {
+        "name": "正文 · 安排与要求",
+        "sentences": [
+          "The arrangements are as follows: first, ______; second, ______.",
+          "Those who want to participate are required to ______ before ______.",
+          "Please sign up at ______ or contact ______ for further information.",
+          "All the participants are expected to arrive on time."
+        ]
+      },
+      {
+        "name": "结尾与落款",
+        "sentences": [
+          "We are looking forward to your active participation.",
+          "Should you have any questions, please do not hesitate to contact us.",
+          "The Students' Union"
+        ]
+      }
+    ],
+    "fullTemplate": "NOTICE\n\nIn order to ______, the Students' Union is going to hold ______. It will be held at ______ from ______ to ______.\n\nThe arrangements are as follows: first, ______; second, ______. Those who want to participate are required to ______ before ______.\n\nWe are looking forward to your active participation.\n\nThe Students' Union"
+  },
+  "argumentation": {
+    "title": "议论文模板（四六级）",
+    "parts": [
+      {
+        "name": "开头段 · 引入话题",
+        "sentences": [
+          "Nowadays, there is a growing concern over ______.",
+          "Recently, the issue of ______ has aroused wide public attention.",
+          "It is widely acknowledged that ______ plays an indispensable role in ______.",
+          "When it comes to ______, different people hold different views."
+        ]
+      },
+      {
+        "name": "主体段 · 论证观点",
+        "sentences": [
+          "From my perspective, the advantages of ______ far outweigh its disadvantages. In the first place, ______. In the second place, ______.",
+          "There is no denying that ______. A case in point is that ______.",
+          "Admittedly, ______ may bring about some negative effects. Nevertheless, ______.",
+          "Personally, I am in favor of ______ for the following reasons. To begin with, ______. Furthermore, ______."
+        ]
+      },
+      {
+        "name": "结尾段 · 重申观点",
+        "sentences": [
+          "To draw a conclusion, I firmly believe that ______ is beneficial to ______.",
+          "All in all, it is of great significance to ______, and we should spare no effort to ______.",
+          "Therefore, it is advisable for us to ______ so as to ______."
+        ]
+      }
+    ],
+    "fullTemplate": "Nowadays, there is a growing concern over ______. \n\nFrom my perspective, the advantages of ______ far outweigh its disadvantages. In the first place, ______. In the second place, ______. There is no denying that ______. A case in point is that ______.\n\nTo draw a conclusion, I firmly believe that ______ is beneficial to ______. Therefore, it is advisable for us to ______ so as to ______."
+  },
+  "phenomenon": {
+    "title": "现象分析模板（四六级）",
+    "parts": [
+      {
+        "name": "开头段 · 引出现象",
+        "sentences": [
+          "In recent years, ______ has become increasingly popular among ______.",
+          "It is a common phenomenon that ______ in modern society.",
+          "With the rapid development of ______, an increasing number of ______ tend to ______.",
+          "As can be observed everywhere, ______ has drawn great attention from the public."
+        ]
+      },
+      {
+        "name": "主体段 · 原因影响",
+        "sentences": [
+          "Several reasons can be identified for this phenomenon. First of all, ______. Besides, ______. What is more, ______.",
+          "The phenomenon can be explained from the following aspects. For one thing, ______. For another, ______.",
+          "This trend exerts a far-reaching influence on ______. On the positive side, ______; on the negative side, ______.",
+          "It is no exaggeration to say that ______ has changed the way we ______."
+        ]
+      },
+      {
+        "name": "结尾段 · 对策展望",
+        "sentences": [
+          "In view of the above, we should take effective measures to ______.",
+          "Only when we ______ can we ensure that ______ develops in a healthy direction.",
+          "It is high time that both individuals and society made joint efforts to ______.",
+          "In conclusion, ______ is a double-edged sword. We should make full use of its benefits while avoiding its drawbacks."
+        ]
+      }
+    ],
+    "fullTemplate": "In recent years, ______ has become increasingly popular among ______.\n\nSeveral reasons can be identified for this phenomenon. First of all, ______. Besides, ______. What is more, ______. This trend exerts a far-reaching influence on ______. On the positive side, ______; on the negative side, ______.\n\nIn view of the above, we should take effective measures to ______. Only when we ______ can we ensure that ______ develops in a healthy direction."
+  },
+  "cet_letter": {
+    "title": "应用文书信模板（四六级）",
+    "parts": [
+      {
+        "name": "称呼与开头",
+        "sentences": [
+          "Dear Sir or Madam,",
+          "Dear ______,",
+          "I am writing to apply for / suggest / thank you for ______."
+        ]
+      },
+      {
+        "name": "正文 · 具体内容",
+        "sentences": [
+          "To begin with, ______. Moreover, ______. Finally, ______.",
+          "I have acquired relevant knowledge and skills in ______, which qualifies me for ______.",
+          "I would be grateful if my suggestion could be taken into serious consideration.",
+          "Please let me know if there is anything else I can do."
+        ]
+      },
+      {
+        "name": "结尾与落款",
+        "sentences": [
+          "I am looking forward to your favorable reply at your earliest convenience.",
+          "Thank you for considering my application/suggestion.",
+          "Yours sincerely,"
+        ]
+      }
+    ],
+    "fullTemplate": "Dear ______,\n\nI am writing to ______. To begin with, ______. Moreover, ______. Finally, ______.\n\nI would be grateful if ______. I am looking forward to your favorable reply at your earliest convenience.\n\nYours sincerely,\nLi Ming"
+  },
+  "cet_chart": {
+    "title": "图表作文模板（四六级）",
+    "parts": [
+      {
+        "name": "开头段 · 描述图表",
+        "sentences": [
+          "As is clearly shown in the chart, ______ has undergone a steady increase/decline over the period.",
+          "The chart provides some interesting data regarding ______.",
+          "It can be seen from the chart that ______ account(s) for the largest proportion.",
+          "The figure of ______ rose sharply from ______ to ______ during ______."
+        ]
+      },
+      {
+        "name": "主体段 · 分析原因",
+        "sentences": [
+          "The reasons behind this trend are varied. To begin with, ______. In addition, ______.",
+          "This phenomenon can be accounted for by the following factors. For one thing, ______. For another, ______.",
+          "Thanks to the advancement of ______, more and more people are able to ______."
+        ]
+      },
+      {
+        "name": "结尾段 · 总结",
+        "sentences": [
+          "To sum up, the trend is expected to continue, which calls for our attention.",
+          "In conclusion, we should be fully aware of ______ and take proper actions.",
+          "From my point of view, ______ will remain an important issue in the foreseeable future."
+        ]
+      }
+    ],
+    "fullTemplate": "As is clearly shown in the chart, ______ has undergone a steady increase over the period.\n\nThe reasons behind this trend are varied. To begin with, ______. In addition, ______. Thanks to the advancement of ______, more and more people are able to ______.\n\nTo sum up, the trend is expected to continue, which calls for our attention. From my point of view, we should be fully aware of ______ and take proper actions."
+  }
+}

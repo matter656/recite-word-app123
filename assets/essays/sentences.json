@@ -1,0 +1,91 @@
+{
+  "categories": [
+    {
+      "name": "开头引入",
+      "sentences": [
+        "Nowadays, there is a growing concern over ...",
+        "Recently, the issue of ... has aroused wide public attention.",
+        "As the society develops rapidly, ... has become a hot topic among the public.",
+        "It is widely acknowledged that ... plays an indispensable role in our life.",
+        "With the rapid development of ..., more and more people tend to ...",
+        "As can be seen from the chart/picture, ..."
+      ]
+    },
+    {
+      "name": "观点表达",
+      "sentences": [
+        "From my perspective, ...",
+        "As far as I am concerned, ...",
+        "Personally, I am in favor of ...",
+        "I hold the view that ...",
+        "It is my firm belief that ...",
+        "There is no denying that ..."
+      ]
+    },
+    {
+      "name": "衔接过渡",
+      "sentences": [
+        "To begin with, ... Moreover, ... Furthermore, ...",
+        "First and foremost, ... In addition, ... Last but not least, ...",
+        "On the one hand, ... On the other hand, ...",
+        "In the first place, ... In the second place, ...",
+        "What is more, ... / Besides, ... / Additionally, ...",
+        "However, ... / Nevertheless, ... / Despite this, ..."
+      ]
+    },
+    {
+      "name": "举例论证",
+      "sentences": [
+        "A case in point is that ...",
+        "Take ... as an example, ...",
+        "For instance, ...",
+        "A typical example is ...",
+        "This can be illustrated by the fact that ..."
+      ]
+    },
+    {
+      "name": "因果分析",
+      "sentences": [
+        "Several factors may account for this phenomenon.",
+        "This trend can be attributed to the following reasons.",
+        "The underlying causes are not far to seek.",
+        "It is ... that has made it possible for ... to ...",
+        "Thanks to ..., more and more people are able to ...",
+        "Owing to the rapid development of ..., ..."
+      ]
+    },
+    {
+      "name": "结尾总结",
+      "sentences": [
+        "To sum up, ... / In conclusion, ... / To draw a conclusion, ...",
+        "In a nutshell, ... / All in all, ...",
+        "Taking all these factors into consideration, we may safely conclude that ...",
+        "It is high time that we took effective measures to ...",
+        "Only in this way can we ...",
+        "Therefore, it is advisable for us to ..."
+      ]
+    },
+    {
+      "name": "高级词汇替换",
+      "sentences": [
+        "important → crucial / vital / essential / of great significance",
+        "more and more → an increasing number of / a growing number of",
+        "many → a multitude of / a variety of / numerous",
+        "think → hold the view / be convinced / maintain",
+        "solve → address / tackle / cope with / deal with",
+        "very → extremely / remarkably / considerably"
+      ]
+    },
+    {
+      "name": "高分万能句",
+      "sentences": [
+        "It is universally acknowledged that ...",
+        "What deserves our attention is that ...",
+        "It goes without saying that ...",
+        "Nothing is more important than ...",
+        "There is no better way to ... than to ...",
+        "As an old saying goes, 'Where there is a will, there is a way.'"
+      ]
+    }
+  ]
+}

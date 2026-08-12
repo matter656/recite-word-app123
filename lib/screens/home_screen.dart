@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/book.dart';
 import '../providers/app_providers.dart';
+import 'essay_home_screen.dart';
 import 'games_screen.dart';
 import 'study_screen.dart';
 
@@ -27,6 +28,11 @@ class HomeScreen extends ConsumerWidget {
                   _GamesEntryCard(
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const GamesScreen(),
+                    )),
+                  ),
+                  _EssayEntryCard(
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const EssayHomeScreen(),
                     )),
                   ),
                   const SizedBox(height: 4),
@@ -57,6 +63,32 @@ class _GamesEntryCard extends StatelessWidget {
         subtitle: Text('限时挑战 · 记忆翻牌 · 单词接龙',
             style: TextStyle(color: scheme.onPrimaryContainer)),
         trailing: Icon(Icons.chevron_right, color: scheme.onPrimaryContainer),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+/// 作文写作入口卡片。
+class _EssayEntryCard extends StatelessWidget {
+  final VoidCallback onTap;
+  const _EssayEntryCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: scheme.secondaryContainer,
+      child: ListTile(
+        leading: const Icon(Icons.edit_note, color: Colors.teal),
+        title: Text('作文写作',
+            style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: scheme.onSecondaryContainer)),
+        subtitle: Text('考研/四六级模板 · 范文 · 句式 · 写作练习',
+            style: TextStyle(color: scheme.onSecondaryContainer)),
+        trailing: Icon(Icons.chevron_right, color: scheme.onSecondaryContainer),
         onTap: onTap,
       ),
     );
