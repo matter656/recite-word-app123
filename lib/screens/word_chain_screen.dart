@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../games/game_utils.dart';
 import '../games/word_chain_game.dart';
-import '../models/word.dart';
 import '../providers/app_providers.dart';
 
-/// 单词接龙：用当前词的末字母接下一个词（四选一）。
+/// 单词接龙（自由拼写版）：用系统键盘拼出以末字母开头的词。
 class WordChainScreen extends ConsumerStatefulWidget {
   final String bookId;
   const WordChainScreen({super.key, required this.bookId});
@@ -17,11 +17,12 @@ class WordChainScreen extends ConsumerStatefulWidget {
 
 class _WordChainScreenState extends ConsumerState<WordChainScreen> {
   WordChainGame? _game;
-  ChainQuestion? _question;
+  final _controller = TextEditingController();
   bool _loading = true;
   String? _error;
-  int? _lastPicked;
-  bool? _lastCorrect;
+  String? _hintText;
+  String? _feedback; // 上次提交的反馈
+  bool _feedbackBad = false;
 
   @override
   void initState() {
@@ -29,10 +30,18 @@ class _WordChainScreenState extends ConsumerState<WordChainScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     setState(() {
       _loading = true;
       _error = null;
+      _hintText = null;
+      _feedback = null;
     });
     try {
       final words = await ref
@@ -41,9 +50,9 @@ class _WordChainScreenState extends ConsumerState<WordChainScreen> {
       if (!mounted) return;
       setState(() {
         _game = WordChainGame(words);
-        _question = _game!.nextQuestion();
         _loading = false;
       });
+      _controller.clear();
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -53,21 +62,45 @@ class _WordChainScreenState extends ConsumerState<WordChainScreen> {
     }
   }
 
-  void _pick(Word option) {
+  void _submit() {
     final game = _game;
-    if (game == null || _lastPicked != null) return;
-    final correct = game.answer(option.id);
+    if (game == null || game.ended) return;
+    final text = _controller.text;
+    if (text.trim().isEmpty) return;
+
+    final outcome = game.submit(text);
+    _controller.clear();
     setState(() {
-      _lastPicked = option.id;
-      _lastCorrect = correct;
+      _hintText = null;
+      switch (outcome) {
+        case SubmitOutcome.correct:
+          _feedback = '✓ 接上了！当前词：${game.current.word}';
+          _feedbackBad = false;
+        case SubmitOutcome.wrong:
+          final last = lastLetterOf(game.current.word);
+          _feedback = '✗ 不对哦，要以「$last」开头且在词库里（${game.errors}/${WordChainGame.kMaxErrorsPerWord} 次）';
+          _feedbackBad = true;
+        case SubmitOutcome.wordSkipped:
+          _feedback = '这个接不出来了，已换词，继续挑战！当前词：${game.current.word}';
+          _feedbackBad = false;
+        case SubmitOutcome.ended:
+          _feedback = '游戏结束';
+          _feedbackBad = false;
+      }
     });
-    Future.delayed(const Duration(milliseconds: 600), () {
-      if (!mounted) return;
-      setState(() {
-        _lastPicked = null;
-        _lastCorrect = null;
-        _question = game.nextQuestion(); // 结束时为 null
-      });
+  }
+
+  void _useHint() {
+    final game = _game;
+    if (game == null || game.ended) return;
+    final hint = game.useHint();
+    setState(() {
+      if (hint != null) {
+        final last = lastLetterOf(game.current.word);
+        _hintText = '提示：可以接「$hint」（以 $last 开头）';
+      } else {
+        _hintText = null;
+      }
     });
   }
 
@@ -96,27 +129,15 @@ class _WordChainScreenState extends ConsumerState<WordChainScreen> {
       );
     }
     final game = _game!;
-    final q = _question;
-    if (q == null) {
+    if (game.ended) {
       return _ResultView(game: game, onReplay: _load);
     }
     final last = lastLetterOf(game.current.word);
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Text('已接 ${game.chain} 个词',
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              const Spacer(),
-              Text('用过的词 ${game.usedCount} 个',
-                  style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ),
-        ),
+        _statusBar(game),
         Expanded(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
@@ -138,20 +159,76 @@ class _WordChainScreenState extends ConsumerState<WordChainScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '下一个词必须以「$last」开头',
+                          '拼一个以「$last」开头的单词',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                for (final option in q.options)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _optionButton(option, q),
+                if (_hintText != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade100,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(_hintText!,
+                        style: const TextStyle(
+                            color: Colors.orange, fontWeight: FontWeight.w600)),
                   ),
+                ],
+                if (_feedback != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _feedback!,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: _feedbackBad ? Colors.red.shade700 : Colors.green.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _controller,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.none,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  keyboardType: TextInputType.text,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp('[a-zA-Z]')),
+                  ],
+                  onSubmitted: (_) => _submit(),
+                  decoration: InputDecoration(
+                    hintText: '输入以 $last 开头的单词…',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.send),
+                      onPressed: _submit,
+                    ),
+                  ),
+                ),
               ],
+            ),
+          ),
+        ),
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: _useHint,
+                icon: const Icon(Icons.lightbulb_outline),
+                label: Text(
+                    '提示（${game.hints}/${WordChainGame.kMaxHints} 次）'),
+              ),
             ),
           ),
         ),
@@ -159,40 +236,21 @@ class _WordChainScreenState extends ConsumerState<WordChainScreen> {
     );
   }
 
-  Widget _optionButton(Word option, ChainQuestion q) {
-    Color? bg;
-    IconData? icon;
-    if (_lastPicked != null) {
-      final isCorrectOption = option.id == _lastPicked && _lastCorrect == true;
-      final isWrongPick = option.id == _lastPicked && _lastCorrect == false;
-      if (isCorrectOption) {
-        bg = Colors.green.shade500;
-        icon = Icons.check;
-      } else if (isWrongPick) {
-        bg = Colors.red.shade400;
-        icon = Icons.close;
-      }
-    }
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton(
-        style: FilledButton.styleFrom(
-          backgroundColor: bg,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-        ),
-        onPressed: () => _pick(option),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Icon(icon),
-              const SizedBox(width: 8),
-            ],
-            Text(option.word,
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w600)),
-          ],
-        ),
+  Widget _statusBar(WordChainGame game) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Text('已接 ${game.chain} 词',
+              style: const TextStyle(fontWeight: FontWeight.bold)),
+          const Spacer(),
+          if (game.errors > 0)
+            Text('本轮拼错 ${game.errors}/3',
+                style: TextStyle(color: Colors.red.shade600)),
+          const Spacer(),
+          Text('已用词 ${game.usedCount}',
+              style: Theme.of(context).textTheme.bodySmall),
+        ],
       ),
     );
   }
@@ -220,9 +278,13 @@ class _ResultView extends StatelessWidget {
             Text('${game.chain}',
                 style: theme.textTheme.displayMedium
                     ?.copyWith(fontWeight: FontWeight.bold)),
-            Text('连续接对 ${game.chain} 个词', style: theme.textTheme.bodyLarge),
+            Text('接对 ${game.chain} 个词', style: theme.textTheme.bodyLarge),
             const SizedBox(height: 8),
-            Text('共使用 ${game.usedCount} 个词', style: theme.textTheme.bodyMedium),
+            Text(
+              '共使用 ${game.usedCount} 个词 · 跳过 ${game.skipped} 个'
+              '${game.hints > 0 ? ' · 用了 ${game.hints} 次提示' : ''}',
+              style: theme.textTheme.bodyMedium,
+            ),
             const SizedBox(height: 32),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

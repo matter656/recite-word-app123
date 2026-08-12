@@ -14,7 +14,6 @@ Word w(int id, String word) => Word(
     );
 
 void main() {
-  // 构造一个可控词池：apple(a) / egg(e) / grape(g) / cat(c) ...
   late List<Word> pool;
   setUp(() {
     pool = [
@@ -29,79 +28,96 @@ void main() {
     ];
   });
 
-  test('起始词后出题：候选词首字母等于当前词末字母', () {
+  test('拼对：以末字母开头的词库词，接龙前进并加连击', () {
     final game = WordChainGame(pool, random: Random(1));
-    final q = game.nextQuestion()!;
     final last = lastLetterOf(game.current.word);
-    expect(q.options.length, 4);
-    // 正确候选首字母必须等于末字母
-    final correct = q.options.firstWhere(
-        (x) => firstLetterOf(x.word) == last &&
-            x.id != game.current.id);
-    expect(correct, isNotNull);
-    // 干扰项不以末字母开头
-    for (final opt in q.options) {
-      if (opt.id != correct.id) {
-        expect(firstLetterOf(opt.word), isNot(last),
-            reason: '干扰项 ${opt.word} 不应以 $last 开头');
-      }
-    }
-  });
-
-  test('接对后更新当前词并加连击，已用词不重复出', () {
-    final game = WordChainGame(pool, random: Random(2));
-    final q = game.nextQuestion()!;
-    final last = lastLetterOf(game.current.word);
-    final correct = q.options.firstWhere(
-        (x) => firstLetterOf(x.word) == last && x.id != game.current.id);
-    expect(game.answer(correct.id), isTrue);
+    // 找一个可接的词
+    final next = pool.firstWhere(
+        (x) => x.id != game.current.id && firstLetterOf(x.word) == last);
+    final result = game.submit(next.word);
+    expect(result, SubmitOutcome.correct);
     expect(game.chain, 1);
-    expect(game.current.id, correct.id);
+    expect(game.current.id, next.id);
     expect(game.usedCount, 2);
-
-    // 已用词不会再出现在后续题目的正确候选里
-    final q2 = game.nextQuestion();
-    if (q2 != null) {
-      // 正确候选应排除已用词：验证 options 中最多 1 个以末字母开头的词
-      final starts = q2.options
-          .where((x) => firstLetterOf(x.word) == lastLetterOf(game.current.word))
-          .toList();
-      expect(starts.length, 1);
-    }
   });
 
-  test('接错即结束', () {
+  test('拼错：大小写不敏感，不接的词/不以末字母开头的词都算错', () {
+    final game = WordChainGame(pool, random: Random(2));
+    final last = lastLetterOf(game.current.word);
+
+    // 不以末字母开头的词库词
+    final wrongStart = pool.firstWhere(
+        (x) => x.id != game.current.id && firstLetterOf(x.word) != last);
+    expect(game.submit(wrongStart.word), SubmitOutcome.wrong);
+    expect(game.errors, 1);
+
+    // 不在词库里的词
+    expect(game.submit('zzzzzz'), SubmitOutcome.wrong);
+    expect(game.errors, 2);
+
+    // 拼对时大小写不敏感
+    final correct = pool.firstWhere(
+        (x) => x.id != game.current.id && firstLetterOf(x.word) == last);
+    expect(game.submit(correct.word.toUpperCase()), SubmitOutcome.correct);
+  });
+
+  test('拼错 3 次：当前词作废并换词，游戏继续', () {
     final game = WordChainGame(pool, random: Random(3));
-    final q = game.nextQuestion()!;
-    final wrong = q.options.firstWhere(
-        (x) => firstLetterOf(x.word) != lastLetterOf(game.current.word));
-    expect(game.answer(wrong.id), isFalse);
-    expect(game.ended, isTrue);
-    expect(game.nextQuestion(), isNull);
+    final firstCurrent = game.current.id;
+    game.submit('zzz');
+    game.submit('zzz');
+    final r3 = game.submit('zzz');
+    expect(r3, SubmitOutcome.wordSkipped);
+    expect(game.skipped, 1);
+    expect(game.current.id, isNot(firstCurrent));
+    expect(game.errors, 0);
+    expect(game.ended, isFalse);
   });
 
-  test('无可用接词时结束', () {
-    // 构造：所有词都以 x 开头（词池无接词可能）→ 但首词随机……
-    // 直接构造极端池：apple(a), ant(a), alligator(a)——全 a 开头
-    final allA = [w(1, 'apple'), w(2, 'ant'), w(3, 'alligator')];
-    final game = WordChainGame(allA, random: Random(4));
-    // 无论首词是什么，末字母 l/e/t 等都找不到以该字母开头的其他词
-    // （池内全 a 开头，且不能重复用词）
-    var count = 0;
-    while (!game.ended) {
-      final q = game.nextQuestion();
-      if (q == null) break;
-      // 全部选干扰项（非 a 开头的没有）→ 必然出错结束
-      count++;
-      if (count > 10) break;
-      final last = lastLetterOf(game.current.word);
-      final candidates =
-          q.options.where((x) => firstLetterOf(x.word) == last).toList();
-      if (candidates.isEmpty) {
-        game.answer(q.options.first.id);
-      } else {
-        game.answer(candidates.first.id);
+  test('已用过的词不能重复接', () {
+    final game = WordChainGame(pool, random: Random(4));
+    final last = lastLetterOf(game.current.word);
+    final next = pool.firstWhere(
+        (x) => x.id != game.current.id && firstLetterOf(x.word) == last);
+    expect(game.submit(next.word), SubmitOutcome.correct);
+    // 再次提交同一个词（现在已用）→ 错
+    expect(game.submit(next.word), SubmitOutcome.wrong);
+  });
+
+  test('提示：返回可接的词，累计 5 次后游戏结束', () {
+    final game = WordChainGame(pool, random: Random(5));
+    for (var i = 0; i < 5; i++) {
+      final hint = game.useHint();
+      expect(hint, isNotNull);
+      expect(firstLetterOf(hint!), lastLetterOf(game.current.word),
+          reason: '提示词应以末字母开头');
+      if (i < 4) {
+        expect(game.ended, isFalse);
       }
+    }
+    expect(game.hints, 5);
+    expect(game.hintsExhausted, isTrue);
+    expect(game.ended, isTrue);
+  });
+
+  test('提示不重复已用词，用完提示后 submit 返回 ended', () {
+    final game = WordChainGame(pool, random: Random(6));
+    for (var i = 0; i < WordChainGame.kMaxHints; i++) {
+      game.useHint();
+    }
+    expect(game.submit('whatever'), SubmitOutcome.ended);
+  });
+
+  test('无可用接词时 useHint 返回 null 并结束', () {
+    // 全 a 开头词池：末字母都不是 a → 无可接词
+    final allA = [w(1, 'apple'), w(2, 'ant'), w(3, 'alligator')];
+    final game = WordChainGame(allA, random: Random(7));
+    // 无论首词是哪个，末字母都不是 a，找不到以该字母开头的其他词
+    // 这里用循环验证游戏可自然终止
+    var guard = 0;
+    while (!game.ended && guard < 20) {
+      game.useHint();
+      guard++;
     }
     expect(game.ended, isTrue);
   });

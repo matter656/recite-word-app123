@@ -53,7 +53,7 @@ class _GamesScreenState extends ConsumerState<GamesScreen> {
                 icon: Icons.link,
                 color: Colors.indigo,
                 title: '单词接龙',
-                description: '用末字母接下一个词，看你能接多长',
+                description: '用末字母接下一个词，拼写挑战（可提示）',
                 enabled: bookId != null,
                 onTap: () => _start(WordChainScreen(bookId: bookId!)),
               ),
