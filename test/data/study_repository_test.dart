@@ -1,0 +1,123 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:vocab_app/data/app_database.dart';
+import 'package:vocab_app/data/repositories/study_repository.dart';
+import 'package:vocab_app/data/repositories/word_book_repository.dart';
+import 'package:vocab_app/models/card_state.dart';
+
+const sampleBookJson = '''
+{
+  "book": "cet4",
+  "name": "四级核心词汇",
+  "desc": "测试词书",
+  "words": [
+    {"word": "alpha", "phonetic": "", "meaning": "n. 阿尔法", "example": null},
+    {"word": "beta", "phonetic": "", "meaning": "n. 贝塔", "example": null},
+    {"word": "gamma", "phonetic": "", "meaning": "n. 伽马", "example": null},
+    {"word": "delta", "phonetic": "", "meaning": "n. 德尔塔", "example": null},
+    {"word": "epsilon", "phonetic": "", "meaning": "n. 艾普西龙", "example": null}
+  ]
+}
+''';
+
+void main() {
+  late AppDatabase appDb;
+  late WordBookRepository bookRepo;
+  late StudyRepository studyRepo;
+  final fixedNow = DateTime(2026, 8, 12, 10);
+
+  setUp(() {
+    sqfliteFfiInit();
+    appDb = AppDatabase(
+      databaseFactory: databaseFactoryFfi,
+      path: inMemoryDatabasePath,
+    );
+    bookRepo = WordBookRepository(appDb);
+    studyRepo = StudyRepository(appDb);
+  });
+
+  tearDown(() async {
+    await appDb.close();
+  });
+
+  Future<List<(String, int)>> seed() async {
+    await bookRepo.importWordBookJson(sampleBookJson);
+    final words = await bookRepo.getWords('cet4');
+    return words.map((w) => (w.word, w.id)).toList();
+  }
+
+  test('首次队列：只含新词，受 newLimit 限制', () async {
+    await seed();
+    final queue = await studyRepo.getTodayQueue('cet4', newLimit: 3, now: fixedNow);
+    expect(queue.length, 3);
+    expect(queue.every((c) => c.state.status == CardStatus.newWord), isTrue);
+  });
+
+  test('复习词优先于新词', () async {
+    final seeded = await seed();
+    // alpha 学过一次并到期（直接改库模拟）
+    final db = await appDb.database;
+    final alpha = seeded.first;
+    await db.update('card_states',
+        {'status': 'learning', 'due_date': fixedNow.subtract(const Duration(days: 1)).millisecondsSinceEpoch},
+        where: 'word_id = ?', whereArgs: [alpha.$2]);
+
+    final queue = await studyRepo.getTodayQueue('cet4', newLimit: 2, now: fixedNow);
+    expect(queue.length, 3);
+    expect(queue.first.word.word, 'alpha'); // 复习词在前
+    expect(queue.first.state.status, CardStatus.learning);
+  });
+
+  test('未到期复习词不进队列', () async {
+    final seeded = await seed();
+    final db = await appDb.database;
+    final alpha = seeded.first;
+    await db.update('card_states',
+        {'status': 'reviewing', 'due_date': fixedNow.add(const Duration(days: 1)).millisecondsSinceEpoch},
+        where: 'word_id = ?', whereArgs: [alpha.$2]);
+
+    final queue = await studyRepo.getTodayQueue('cet4', newLimit: 2, now: fixedNow);
+    expect(queue.every((c) => c.state.status == CardStatus.newWord), isTrue);
+    expect(queue.length, 2);
+  });
+
+  test('评分记得：更新 card_state 并写 study_log', () async {
+    final seeded = await seed();
+    final alpha = seeded.first;
+    await studyRepo.submitRating(alpha.$2, 2, now: fixedNow);
+
+    final db = await appDb.database;
+    final state = (await db.query('card_states', where: 'word_id = ?', whereArgs: [alpha.$2])).first;
+    expect(state['status'], 'learning');
+    expect(state['interval_days'], 1);
+    expect(state['review_count'], 1);
+    expect(state['last_reviewed_at'], fixedNow.millisecondsSinceEpoch);
+    // due_date = 明天
+    final due = DateTime.fromMillisecondsSinceEpoch(state['due_date'] as int);
+    expect(due, fixedNow.add(const Duration(days: 1)));
+
+    final logs = await db.query('study_logs');
+    expect(logs.length, 1);
+    expect(logs.first['date'], '2026-08-12');
+    expect(logs.first['rating'], 2);
+  });
+
+  test('评分忘了：间隔回 1 天，EF 下降', () async {
+    final seeded = await seed();
+    final alpha = seeded.first;
+    await studyRepo.submitRating(alpha.$2, 2, now: fixedNow); // 先学一次
+    await studyRepo.submitRating(alpha.$2, 0, now: fixedNow.add(const Duration(days: 1)));
+
+    final db = await appDb.database;
+    final state = (await db.query('card_states', where: 'word_id = ?', whereArgs: [alpha.$2])).first;
+    expect(state['status'], 'learning');
+    expect(state['interval_days'], 1);
+    expect(state['ease_factor'], closeTo(2.3, 0.001));
+    expect(state['review_count'], 2);
+  });
+
+  test('评分不存在的词抛错', () async {
+    expect(() => studyRepo.submitRating(99999, 2, now: fixedNow),
+        throwsA(isA<StateError>()));
+  });
+}
