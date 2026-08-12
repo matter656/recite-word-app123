@@ -27,6 +27,7 @@ class WordAudioService {
 /// 句子/短文在线发音（百度翻译 TTS，国内可访问、免费、支持长文本）。
 class SentenceAudioService {
   static final AudioPlayer _player = AudioPlayer();
+  static bool _playing = false;
 
   /// 播放句子/短文发音（英文）。返回是否已开始播放。
   static Future<bool> play(String text) async {
@@ -35,13 +36,33 @@ class SentenceAudioService {
     try {
       await _player.stop();
       await _player.play(UrlSource(url));
+      _playing = true;
       return true;
     } catch (_) {
+      _playing = false;
       return false;
     }
   }
 
-  static Future<void> stop() => _player.stop();
+  /// 暂停播放。
+  static Future<void> pause() async {
+    await _player.pause();
+    _playing = false;
+  }
+
+  /// 继续播放。
+  static Future<void> resume() async {
+    await _player.resume();
+    _playing = true;
+  }
+
+  /// 停止播放。
+  static Future<void> stop() async {
+    await _player.stop();
+    _playing = false;
+  }
+
+  static bool get isPlaying => _playing;
 }
 
 /// TTS 朗读服务：调用 Android 原生 TextToSpeech（绕开 flutter_tts 兼容问题）。

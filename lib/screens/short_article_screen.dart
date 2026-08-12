@@ -19,11 +19,13 @@ class _ShortArticleScreenState extends State<ShortArticleScreen> {
   int? _lastPick;
   final _blankController = TextEditingController();
   String? _blankResult;
-  bool _speaking = false;
+  bool _audioPlaying = false; // 音频播放中
+  bool _audioPaused = false; // 音频已暂停
 
   @override
   void dispose() {
     TtsService.stop();
+    SentenceAudioService.stop(); // 退出页面立即停止播放
     _blankController.dispose();
     super.dispose();
   }
@@ -31,16 +33,35 @@ class _ShortArticleScreenState extends State<ShortArticleScreen> {
   ListeningQuestion get _question => widget.article.questions[_questionIndex];
 
   Future<void> _playArticle() async {
-    setState(() => _speaking = true);
-    // 短文用在线发音（百度 TTS），稳定不依赖手机引擎
+    setState(() {
+      _audioPlaying = true;
+      _audioPaused = false;
+    });
     final ok = await SentenceAudioService.play(widget.article.text);
     if (!ok && mounted) {
+      setState(() => _audioPlaying = false);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('播放失败：请检查网络连接（短文朗读需要联网）'),
         duration: Duration(seconds: 3),
       ));
     }
-    if (mounted) setState(() => _speaking = false);
+  }
+
+  /// 暂停 / 继续播放。
+  Future<void> _togglePause() async {
+    if (_audioPaused) {
+      await SentenceAudioService.resume();
+      setState(() {
+        _audioPaused = false;
+        _audioPlaying = true;
+      });
+    } else {
+      await SentenceAudioService.pause();
+      setState(() {
+        _audioPaused = true;
+        _audioPlaying = true;
+      });
+    }
   }
 
   void _answerChoice(int index) {
@@ -108,18 +129,34 @@ class _ShortArticleScreenState extends State<ShortArticleScreen> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(_speaking ? Icons.volume_up : Icons.headphones,
+                Icon(_audioPlaying
+                    ? (_audioPaused ? Icons.pause_circle_outline : Icons.volume_up)
+                    : Icons.headphones,
                     color: theme.colorScheme.primary),
                 const SizedBox(width: 12),
                 const Expanded(
                   child: Text('先听一遍短文，再回答问题',
                       style: TextStyle(fontWeight: FontWeight.w600)),
                 ),
-                FilledButton.icon(
-                  onPressed: _speaking ? null : _playArticle,
-                  icon: const Icon(Icons.play_arrow),
-                  label: Text(_speaking ? '播放中…' : '播放'),
-                ),
+                if (_audioPlaying)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      FilledButton.tonalIcon(
+                        onPressed: _togglePause,
+                        icon: Icon(_audioPaused
+                            ? Icons.play_arrow
+                            : Icons.pause),
+                        label: Text(_audioPaused ? '继续' : '暂停'),
+                      ),
+                    ],
+                  )
+                else
+                  FilledButton.icon(
+                    onPressed: _playArticle,
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('播放'),
+                  ),
               ],
             ),
           ),
