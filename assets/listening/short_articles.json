@@ -1,0 +1,124 @@
+{
+  "articles": [
+    {
+      "id": "campus-life",
+      "title": "My Campus Life",
+      "level": "入门",
+      "topic": "校园",
+      "text": "My name is Li Hua, and I am a freshman at a university in Shanghai. I live in a dormitory with three roommates. Every morning, I get up at seven and go to the library to study. In the afternoon, I have classes and sometimes play basketball with my friends. In the evening, I usually review my notes and read English books. I enjoy my campus life very much because I have made many good friends here.",
+      "questions": [
+        {"type": "choice", "question": "Where does Li Hua live?", "options": ["In a dormitory with three roommates", "At home with his parents", "In a hotel near the school", "In an apartment alone"], "answer": 0},
+        {"type": "choice", "question": "What does Li Hua do in the morning?", "options": ["Play basketball", "Go to the library to study", "Read English books", "Take a walk in the park"], "answer": 1},
+        {"type": "blank", "question": "Li Hua has made many good ______ here.", "answer": "friends"}
+      ]
+    },
+    {
+      "id": "park-day",
+      "title": "A Day in the Park",
+      "level": "入门",
+      "topic": "生活",
+      "text": "Last Sunday, my family and I went to the city park. The weather was sunny and warm. We took a picnic with us and sat under a big tree. My little sister played with a ball, and my parents talked with their friends. I walked around the park and took many photos of the flowers. At noon, we had lunch together. Everyone was happy, and we all agreed to visit the park again next month.",
+      "questions": [
+        {"type": "choice", "question": "What was the weather like last Sunday?", "options": ["Rainy and cold", "Sunny and warm", "Windy and cloudy", "Snowy and cold"], "answer": 1},
+        {"type": "choice", "question": "What did the writer do in the park?", "options": ["Played with a ball", "Talked with friends", "Took photos of the flowers", "Went swimming"], "answer": 2},
+        {"type": "blank", "question": "The family agreed to visit the park again next ______.", "answer": "month"}
+      ]
+    },
+    {
+      "id": "beijing-weather",
+      "title": "The Weather in Beijing",
+      "level": "入门",
+      "topic": "生活",
+      "text": "The weather in Beijing changes a lot during the year. Spring is warm but sometimes windy. Summer is very hot, and it often rains in July and August. Autumn is the best season, with clear skies and cool air. Winter is cold and dry, but it is beautiful when it snows. Many people enjoy taking photos of the city in winter. When you visit Beijing, remember to check the weather before you go out.",
+      "questions": [
+        {"type": "choice", "question": "Which season is the best in Beijing according to the passage?", "options": ["Spring", "Summer", "Autumn", "Winter"], "answer": 2},
+        {"type": "choice", "question": "What is the weather like in summer in Beijing?", "options": ["Warm and windy", "Hot with rain", "Cold and dry", "Cool and cloudy"], "answer": 1},
+        {"type": "blank", "question": "Many people enjoy taking photos of the city in ______.", "answer": "winter"}
+      ]
+    },
+    {
+      "id": "train-reading",
+      "title": "Reading on the Train",
+      "level": "初级",
+      "topic": "生活",
+      "text": "Every day, thousands of people take the subway to work in big cities. Many of them read books or newspapers during the ride. Some people say that the subway is a good place to read because the ride gives them free time. A survey shows that people who read on the subway read about five more books a year than those who do not. Reading on the train is a small habit, but it can make a big difference in the long run.",
+      "questions": [
+        {"type": "choice", "question": "Why is the subway a good place to read?", "options": ["It is quiet and dark", "The ride gives people free time", "Books are free there", "There are many libraries inside"], "answer": 1},
+        {"type": "choice", "question": "How many more books do subway readers read a year?", "options": ["About two", "About five", "About ten", "About twenty"], "answer": 1},
+        {"type": "blank", "question": "Reading on the train is a small habit that can make a big ______.", "answer": "difference"}
+      ]
+    },
+    {
+      "id": "home-robots",
+      "title": "Robots at Home",
+      "level": "初级",
+      "topic": "科技",
+      "text": "Robots are becoming more and more common in our daily lives. Today, some families use robot vacuum cleaners to clean their floors. In the future, robots may cook meals, wash dishes, and even take care of old people. Scientists say that robots can save us a lot of time, but they also remind us that robots cannot replace human feelings. We should use robots to help us, not to depend on them completely.",
+      "questions": [
+        {"type": "choice", "question": "What do some families use robot vacuum cleaners to do?", "options": ["Cook meals", "Clean the floors", "Wash dishes", "Take care of old people"], "answer": 1},
+        {"type": "choice", "question": "What do scientists remind us about robots?", "options": ["Robots are very expensive", "Robots can replace human feelings", "Robots cannot replace human feelings", "Robots are dangerous"], "answer": 2},
+        {"type": "blank", "question": "We should use robots to help us, not to ______ on them completely.", "answer": "depend"}
+      ]
+    },
+    {
+      "id": "mid-autumn",
+      "title": "The Mid-Autumn Festival",
+      "level": "初级",
+      "topic": "文化",
+      "text": "The Mid-Autumn Festival is one of the most important traditional festivals in China. It falls on the 15th day of the eighth lunar month, when the moon is full and bright. On this day, family members get together, enjoy a big dinner, and eat mooncakes. People also watch the moon and tell stories about Chang'e, the goddess of the moon. For Chinese people, the festival means family reunion and happiness.",
+      "questions": [
+        {"type": "choice", "question": "When does the Mid-Autumn Festival fall?", "options": ["On the first day of January", "On the 15th day of the eighth lunar month", "On the 10th day of May", "On the 1st day of the tenth month"], "answer": 1},
+        {"type": "choice", "question": "What do people eat on this day?", "options": ["Dumplings", "Noodles", "Mooncakes", "Rice cakes"], "answer": 2},
+        {"type": "blank", "question": "For Chinese people, the festival means family ______ and happiness.", "answer": "reunion"}
+      ]
+    },
+    {
+      "id": "saving-water",
+      "title": "Saving Water",
+      "level": "初级",
+      "topic": "环境",
+      "text": "Water is one of the most valuable resources on the earth, but fresh water is getting less and less. Many people waste water every day without thinking about it. For example, some people keep the tap running while brushing their teeth. We can save water in simple ways: turn off the tap when we do not need it, take shorter showers, and reuse water for plants. If everyone saves a little water, we can protect our planet for the future.",
+      "questions": [
+        {"type": "choice", "question": "What is the passage mainly about?", "options": ["How to swim", "How to save water", "How to grow plants", "How to brush teeth"], "answer": 1},
+        {"type": "choice", "question": "Which is a way to save water mentioned in the passage?", "options": ["Keep the tap running", "Take longer showers", "Turn off the tap when not needed", "Use more water for plants"], "answer": 2},
+        {"type": "blank", "question": "Fresh water is getting less and ______.", "answer": "less"}
+      ]
+    },
+    {
+      "id": "healthy-life",
+      "title": "A Healthy Lifestyle",
+      "level": "初级",
+      "topic": "健康",
+      "text": "A healthy lifestyle is important for everyone. Doctors suggest that we exercise for at least thirty minutes every day. Walking, running and swimming are all good choices. Eating more vegetables and less fast food is also important. Besides, we should sleep for about eight hours a night and stay away from smoking. If we follow these simple rules, we can keep our body and mind healthy and full of energy.",
+      "questions": [
+        {"type": "choice", "question": "How long should we exercise every day according to the doctors?", "options": ["At least ten minutes", "At least thirty minutes", "At least one hour", "At least two hours"], "answer": 1},
+        {"type": "choice", "question": "What should we eat more?", "options": ["Fast food", "Vegetables", "Candy", "Fried chicken"], "answer": 1},
+        {"type": "blank", "question": "We should sleep for about eight hours a ______.", "answer": "night"}
+      ]
+    },
+    {
+      "id": "online-shopping",
+      "title": "Online Shopping",
+      "level": "中级",
+      "topic": "科技",
+      "text": "Online shopping has changed the way people buy things. With just a few clicks, we can buy almost anything, from daily goods to electronic devices, and have them delivered to our door within days. The convenience of online shopping has made it popular, especially among young people. However, it also brings problems, such as buying things we do not really need and the risk of receiving poor-quality goods. Experts suggest that we compare prices and read reviews carefully before paying.",
+      "questions": [
+        {"type": "choice", "question": "What has online shopping changed according to the passage?", "options": ["The way people cook", "The way people travel", "The way people buy things", "The way people study"], "answer": 2},
+        {"type": "choice", "question": "Which is a problem of online shopping mentioned?", "options": ["Stores are closed", "Goods are too expensive", "People may buy things they do not need", "Delivery takes years"], "answer": 2},
+        {"type": "blank", "question": "Experts suggest comparing prices and reading ______ before paying.", "answer": "reviews"}
+      ]
+    },
+    {
+      "id": "teamwork",
+      "title": "The Importance of Teamwork",
+      "level": "中级",
+      "topic": "社会",
+      "text": "Teamwork plays an important role in both school and work. When people work together, they can share ideas, learn from each other, and finish tasks faster. A famous saying goes, \"Many hands make light work.\" However, teamwork is not always easy. Different opinions may cause arguments, and some members may do less than others. To make a team successful, everyone should communicate honestly, respect each other, and be willing to take responsibility.",
+      "questions": [
+        {"type": "choice", "question": "What is the main idea of the passage?", "options": ["Working alone is better", "Teamwork is important but not easy", "Arguments are always bad", "Teams never finish tasks"], "answer": 1},
+        {"type": "choice", "question": "Which is a way to make a team successful?", "options": ["Keep opinions to yourself", "Let one person do all the work", "Communicate honestly and respect each other", "Avoid all arguments"], "answer": 2},
+        {"type": "blank", "question": "Many hands make light ______.", "answer": "work"}
+      ]
+    }
+  ]
+}

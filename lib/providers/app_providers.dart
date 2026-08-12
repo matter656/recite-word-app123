@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/app_database.dart';
 import '../data/repositories/essay_repository.dart';
+import '../data/repositories/listening_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../data/repositories/statistics_repository.dart';
 import '../data/repositories/study_repository.dart';
@@ -31,6 +32,13 @@ final essayRepositoryProvider = Provider<EssayRepository>(
 /// 作文考试类别列表。
 final essayExamsProvider =
     FutureProvider((ref) => ref.watch(essayRepositoryProvider).getExams());
+
+final listeningRepositoryProvider =
+    Provider<ListeningRepository>((ref) => ListeningRepository());
+
+/// 短文听力列表。
+final listeningArticlesProvider = FutureProvider(
+    (ref) => ref.watch(listeningRepositoryProvider).getArticles());
 
 /// 词书列表（含导入状态刷新）。
 final booksProvider =

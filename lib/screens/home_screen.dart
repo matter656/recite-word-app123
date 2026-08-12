@@ -5,6 +5,7 @@ import '../models/book.dart';
 import '../providers/app_providers.dart';
 import 'essay_home_screen.dart';
 import 'games_screen.dart';
+import 'listening_home_screen.dart';
 import 'study_screen.dart';
 
 /// 首页：词书列表与入口。
@@ -33,6 +34,11 @@ class HomeScreen extends ConsumerWidget {
                   _EssayEntryCard(
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const EssayHomeScreen(),
+                    )),
+                  ),
+                  _ListeningEntryCard(
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const ListeningHomeScreen(),
                     )),
                   ),
                   const SizedBox(height: 4),
@@ -89,6 +95,32 @@ class _EssayEntryCard extends StatelessWidget {
         subtitle: Text('考研/四六级模板 · 范文 · 句式 · 写作练习',
             style: TextStyle(color: scheme.onSecondaryContainer)),
         trailing: Icon(Icons.chevron_right, color: scheme.onSecondaryContainer),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+/// 英语听力入口卡片。
+class _ListeningEntryCard extends StatelessWidget {
+  final VoidCallback onTap;
+  const _ListeningEntryCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: scheme.tertiaryContainer,
+      child: ListTile(
+        leading: const Icon(Icons.headphones, color: Colors.deepPurple),
+        title: Text('英语听力',
+            style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: scheme.onTertiaryContainer)),
+        subtitle: Text('听音选词 · 听句理解 · 跟读回放 · 短文听力',
+            style: TextStyle(color: scheme.onTertiaryContainer)),
+        trailing: Icon(Icons.chevron_right, color: scheme.onTertiaryContainer),
         onTap: onTap,
       ),
     );
