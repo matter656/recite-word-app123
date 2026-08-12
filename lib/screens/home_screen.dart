@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/book.dart';
 import '../providers/app_providers.dart';
+import 'games_screen.dart';
 import 'study_screen.dart';
 
 /// 首页：词书列表与入口。
@@ -20,11 +21,43 @@ class HomeScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('加载失败：$e')),
         data: (books) => books.isEmpty
             ? const Center(child: Text('暂无词书，请先导入词库'))
-            : ListView.builder(
+            : ListView(
                 padding: const EdgeInsets.all(12),
-                itemCount: books.length,
-                itemBuilder: (context, i) => _BookCard(book: books[i]),
+                children: [
+                  _GamesEntryCard(
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const GamesScreen(),
+                    )),
+                  ),
+                  const SizedBox(height: 4),
+                  for (final book in books) _BookCard(book: book),
+                ],
               ),
+      ),
+    );
+  }
+}
+
+/// 趣味玩法入口卡片。
+class _GamesEntryCard extends StatelessWidget {
+  final VoidCallback onTap;
+  const _GamesEntryCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: scheme.primaryContainer,
+      child: ListTile(
+        leading: const Icon(Icons.sports_esports, color: Colors.deepOrange),
+        title: Text('趣味玩法',
+            style: TextStyle(
+                fontWeight: FontWeight.w600, color: scheme.onPrimaryContainer)),
+        subtitle: Text('限时挑战 · 记忆翻牌 · 单词接龙',
+            style: TextStyle(color: scheme.onPrimaryContainer)),
+        trailing: Icon(Icons.chevron_right, color: scheme.onPrimaryContainer),
+        onTap: onTap,
       ),
     );
   }
