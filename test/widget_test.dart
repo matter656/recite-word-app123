@@ -41,12 +41,16 @@ class FakeStudyRepository extends StudyRepository {
   final List<int> rated = [];
 
   @override
-  Future<List<StudyCard>> getTodayQueue(String bookId,
+  Future<StudyQueue> getTodayQueue(String bookId,
       {int newLimit = 20,
       DateTime? now,
       bool shuffle = true,
       Random? random}) async {
-    return _queue;
+    return StudyQueue(
+      cards: _queue,
+      newTotal: _queue.length,
+      reviewTotal: 0,
+    );
   }
 
   @override

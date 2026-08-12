@@ -72,7 +72,7 @@ void main() {
     final books = await bookRepo.getBooks();
     for (final b in books) {
       final queue = await studyRepo.getTodayQueue(b.id, newLimit: 20);
-      expect(queue.length, 20);
+      expect(queue.cards.length, 20);
     }
   });
 

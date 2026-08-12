@@ -51,8 +51,8 @@ void main() {
   test('首次队列：只含新词，受 newLimit 限制', () async {
     await seed();
     final queue = await studyRepo.getTodayQueue('cet4', newLimit: 3, now: fixedNow);
-    expect(queue.length, 3);
-    expect(queue.every((c) => c.state.status == CardStatus.newWord), isTrue);
+    expect(queue.cards.length, 3);
+    expect(queue.cards.every((c) => c.state.status == CardStatus.newWord), isTrue);
   });
 
   test('复习词优先于新词', () async {
@@ -66,9 +66,9 @@ void main() {
 
     final queue = await studyRepo.getTodayQueue('cet4',
         newLimit: 2, now: fixedNow, shuffle: false);
-    expect(queue.length, 3);
-    expect(queue.first.word.word, 'alpha'); // 复习词在前（关闭乱序时）
-    expect(queue.first.state.status, CardStatus.learning);
+    expect(queue.cards.length, 3);
+    expect(queue.cards.first.word.word, 'alpha'); // 复习词在前（关闭乱序时）
+    expect(queue.cards.first.state.status, CardStatus.learning);
   });
 
   test('未到期复习词不进队列', () async {
@@ -80,8 +80,8 @@ void main() {
         where: 'word_id = ?', whereArgs: [alpha.$2]);
 
     final queue = await studyRepo.getTodayQueue('cet4', newLimit: 2, now: fixedNow);
-    expect(queue.every((c) => c.state.status == CardStatus.newWord), isTrue);
-    expect(queue.length, 2);
+    expect(queue.cards.every((c) => c.state.status == CardStatus.newWord), isTrue);
+    expect(queue.cards.length, 2);
   });
 
   test('评分记得：更新 card_state 并写 study_log', () async {
@@ -133,19 +133,46 @@ void main() {
         newLimit: 3, now: day1, shuffle: false);
     final a2 = await studyRepo.getTodayQueue('cet4',
         newLimit: 3, now: day1, shuffle: false);
-    // 同一天：抽到的词完全一致（稳定模式）
-    expect(a1.map((c) => c.word.word).toList(),
-        a2.map((c) => c.word.word).toList());
+    // 同一天：抽到的词完全一致（稳定模式，批次固定；顺序可能不同）
+    expect(a1.cards.map((c) => c.word.word).toSet(),
+        a2.cards.map((c) => c.word.word).toSet());
     // 全部来自 new 状态
-    for (final c in a1) {
+    for (final c in a1.cards) {
       expect(c.state.status, CardStatus.newWord);
     }
 
     final b = await studyRepo.getTodayQueue('cet4',
         newLimit: 3, now: day2, shuffle: false);
     // 跨天：换了一批（日期种子不同）
-    expect(b.map((c) => c.word.word).toList(),
-        isNot(a1.map((c) => c.word.word).toList()));
+    expect(b.cards.map((c) => c.word.word).toList(),
+        isNot(a1.cards.map((c) => c.word.word).toList()));
+  });
+
+  test('批次固定：学几个后退出重进，同一批剩余且总数不变（进度连续）', () async {
+    await seed();
+    final day = DateTime(2026, 8, 12, 10);
+    // 第一次进入：生成 3 词批次
+    final q1 = await studyRepo.getTodayQueue('cet4',
+        newLimit: 3, now: day, shuffle: false);
+    expect(q1.newTotal, 3);
+    expect(q1.cards.length, 3);
+
+    // 学第一个词
+    await studyRepo.submitRating(q1.cards.first.word.id, 2, now: day);
+
+    // 退出重进：同一批，已学排除，newTotal 不变（3）
+    final q2 = await studyRepo.getTodayQueue('cet4',
+        newLimit: 3, now: day, shuffle: false);
+    expect(q2.newTotal, 3);
+    expect(q2.cards.length, 2);
+    expect(q2.cards.map((c) => c.word.word).toSet(),
+        q1.cards.skip(1).map((c) => c.word.word).toSet());
+
+    // 明天：生成新批次（总数不变但词不同）
+    final nextDay = DateTime(2026, 8, 13, 10);
+    final q3 = await studyRepo.getTodayQueue('cet4',
+        newLimit: 3, now: nextDay, shuffle: false);
+    expect(q3.newTotal, 3);
   });
 
   test('shuffle=true 时稳定取样的基础上整体打乱', () async {
@@ -153,12 +180,12 @@ void main() {
     final day = DateTime(2026, 8, 12, 10);
     final q = await studyRepo.getTodayQueue('cet4',
         newLimit: 3, now: day, shuffle: true, random: Random(42));
-    expect(q.length, 3);
+    expect(q.cards.length, 3);
     // 与同天关闭乱序时抽到的词是同一批（稳定模式），只是顺序不同
     final stable = await studyRepo.getTodayQueue('cet4',
         newLimit: 3, now: day, shuffle: false);
-    expect(q.map((c) => c.word.word).toSet(),
-        stable.map((c) => c.word.word).toSet());
+    expect(q.cards.map((c) => c.word.word).toSet(),
+        stable.cards.map((c) => c.word.word).toSet());
   });
 
   test('关闭乱序：shuffle=false 时复习词在前、新词随机取样', () async {
@@ -171,11 +198,11 @@ void main() {
 
     final q = await studyRepo.getTodayQueue('cet4',
         newLimit: 3, now: fixedNow, shuffle: false);
-    expect(q.length, 4); // 1 复习 + 3 新词
+    expect(q.cards.length, 4); // 1 复习 + 3 新词
     // 复习词固定在队首
-    expect(q.first.word.word, 'alpha');
+    expect(q.cards.first.word.word, 'alpha');
     // 其余为新词
-    expect(q.skip(1).every((c) => c.state.status == CardStatus.newWord), isTrue);
+    expect(q.cards.skip(1).every((c) => c.state.status == CardStatus.newWord), isTrue);
   });
 
   test('乱序打乱整个队列：复习词与新词混合，但词集合不变', () async {
@@ -192,8 +219,8 @@ void main() {
     final q = await studyRepo.getTodayQueue('cet4',
         newLimit: 5, now: fixedNow, shuffle: true, random: Random(1));
     // 全部词都在（2 复习 + 3 新词 = 5）
-    expect(q.length, 5);
-    final all = q.map((c) => c.word.word).toSet();
+    expect(q.cards.length, 5);
+    final all = q.cards.map((c) => c.word.word).toSet();
     expect(all, {'alpha', 'beta', 'gamma', 'delta', 'epsilon'});
   });
 }

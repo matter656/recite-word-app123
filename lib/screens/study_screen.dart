@@ -46,8 +46,8 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       );
       if (!mounted) return;
       setState(() {
-        _remaining = List.of(queue);
-        _total = queue.length;
+        _remaining = List.of(queue.cards);
+        _total = queue.total; // 新词批次（含已学）+ 今日到期复习词
         _shuffle = shuffle;
         _revealed = false;
         _loading = false;

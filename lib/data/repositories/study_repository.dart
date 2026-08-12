@@ -13,17 +13,33 @@ class StudyCard {
   const StudyCard({required this.word, required this.state});
 }
 
+/// 当日学习队列：卡片列表 + 任务总数（用于进度显示）。
+class StudyQueue {
+  final List<StudyCard> cards;
+  final int newTotal; // 今日新词任务总数（含已学的，批次固定）
+  final int reviewTotal; // 今日到期复习词数
+
+  const StudyQueue({
+    required this.cards,
+    required this.newTotal,
+    required this.reviewTotal,
+  });
+
+  int get total => newTotal + reviewTotal;
+}
+
 /// 学习调度与评分记录的数据访问层。
 class StudyRepository {
   final AppDatabase _db;
 
   StudyRepository(this._db);
 
-  /// 生成当日学习队列：到期的复习词 + 新词（最多 [newLimit] 个）。
+  /// 生成当日学习队列：到期的复习词 + 今日新词批次（最多 [newLimit] 个）。
   ///
-  /// 新词取样采用**稳定模式**：以日期为随机种子，同一天内抽到的词固定
-  /// （退出重进不换批），跨天自动变化。[shuffle] 为 true 时整个队列再随机打乱。
-  Future<List<StudyCard>> getTodayQueue(
+  /// **批次固定**：今天第一次进入时从全词库随机抽样并持久化到
+  /// `daily_new_words` 表，当天后续进入都读取同一批次（仅排除已学的），
+  /// 进度连续不重置；跨天自动生成新批次。[shuffle] 为 true 时队列再随机打乱。
+  Future<StudyQueue> getTodayQueue(
     String bookId, {
     int newLimit = 20,
     DateTime? now,
@@ -33,27 +49,61 @@ class StudyRepository {
     final db = await _db.database;
     final refNow = now ?? DateTime.now();
     final ts = refNow.millisecondsSinceEpoch;
+    final today = _fmtDate(refNow);
 
     final reviewRows = await db.query('card_states',
         where: "book_id = ? AND status != 'new' AND due_date <= ?",
         whereArgs: [bookId, ts],
         orderBy: 'due_date, id');
-    // 新词稳定抽样：日期种子 → 同一天确定性，跨天变化；且从全词库随机位置取
-    final newRows = await db.query('card_states',
-        where: "book_id = ? AND status = 'new'",
-        whereArgs: [bookId],
-        orderBy: 'id');
+
+    // ---- 今日新词批次（持久化，当天固定）----
     final daySeed =
         refNow.year * 10000 + refNow.month * 100 + refNow.day;
-    final sampled = List.of(newRows)..shuffle(Random(daySeed));
-    final picked = sampled.take(newLimit).toList();
-    // query 返回只读列表，需拷贝后才能 shuffle
-    final all = [...reviewRows, ...picked];
+    final batchRows = await db.query('daily_new_words',
+        where: 'date = ? AND book_id = ?',
+        whereArgs: [today, bookId],
+        orderBy: 'word_id');
+    List<Map<String, Object?>> batchStates;
+    int newTotal;
+    if (batchRows.isEmpty) {
+      // 今天第一次：从全词库随机抽样并落库
+      final newRows = await db.query('card_states',
+          where: "book_id = ? AND status = 'new'",
+          whereArgs: [bookId],
+          orderBy: 'id');
+      final sampled = List.of(newRows)..shuffle(Random(daySeed));
+      batchStates = sampled.take(newLimit).toList();
+      newTotal = batchStates.length;
+      if (batchStates.isNotEmpty) {
+        final batch = db.batch();
+        for (final r in batchStates) {
+          batch.insert('daily_new_words', {
+            'date': today,
+            'book_id': bookId,
+            'word_id': r['word_id'],
+          });
+        }
+        await batch.commit(noResult: true);
+      }
+    } else {
+      // 批次已存在：只取仍未学的（已学的自动排除）
+      final wordIds = batchRows.map((r) => r['word_id'] as int).toList();
+      final ph = List.filled(wordIds.length, '?').join(',');
+      batchStates = await db.query('card_states',
+          where: "word_id IN ($ph) AND status = 'new'",
+          whereArgs: wordIds,
+          orderBy: 'id');
+      newTotal = batchRows.length;
+    }
+
+    // ---- 组装队列 ----
+    final all = [...reviewRows, ...batchStates];
     if (shuffle) {
       all.shuffle(random ?? Random());
     }
-
-    if (all.isEmpty) return const [];
+    if (all.isEmpty) {
+      return const StudyQueue(cards: [], newTotal: 0, reviewTotal: 0);
+    }
 
     final wordIds = all.map((r) => r['word_id'] as int).toList();
     final placeholders = List.filled(wordIds.length, '?').join(',');
@@ -61,14 +111,25 @@ class StudyRepository {
         'SELECT * FROM words WHERE id IN ($placeholders)', wordIds);
     final wordsById = {for (final r in wordRows) r['id'] as int: Word.fromMap(r)};
 
-    return all
+    final cards = all
         .where((r) => wordsById.containsKey(r['word_id'] as int))
         .map((r) => StudyCard(
               word: wordsById[r['word_id'] as int]!,
               state: CardState.fromMap(r),
             ))
         .toList();
+
+    return StudyQueue(
+      cards: cards,
+      newTotal: newTotal,
+      reviewTotal: reviewRows.length,
+    );
   }
+
+  static String _fmtDate(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
 
   /// 提交自评并更新 SM-2 调度、写入学习日志。
   Future<void> submitRating(

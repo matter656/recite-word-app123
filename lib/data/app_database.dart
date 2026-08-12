@@ -8,7 +8,7 @@ import 'package:sqflite/sqflite.dart'
 /// [databaseFactory] 与 [path] 可注入，测试时用 sqflite_common_ffi 的内存库。
 class AppDatabase {
   static const _dbName = 'vocab_app.db';
-  static const _dbVersion = 2;
+  static const _dbVersion = 3;
 
   final DatabaseFactory? databaseFactory;
   final String? path;
@@ -45,6 +45,16 @@ class AppDatabase {
           content TEXT NOT NULL,
           word_count INTEGER NOT NULL DEFAULT 0,
           created_at INTEGER NOT NULL
+        )
+      ''');
+    }
+    if (oldVersion < 3) {
+      await db.execute('''
+        CREATE TABLE daily_new_words (
+          date TEXT NOT NULL,
+          book_id TEXT NOT NULL,
+          word_id INTEGER NOT NULL,
+          PRIMARY KEY (date, book_id, word_id)
         )
       ''');
     }
@@ -105,6 +115,14 @@ class AppDatabase {
         content TEXT NOT NULL,
         word_count INTEGER NOT NULL DEFAULT 0,
         created_at INTEGER NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE daily_new_words (
+        date TEXT NOT NULL,
+        book_id TEXT NOT NULL,
+        word_id INTEGER NOT NULL,
+        PRIMARY KEY (date, book_id, word_id)
       )
     ''');
   }
