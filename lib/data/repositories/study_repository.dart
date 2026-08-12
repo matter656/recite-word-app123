@@ -19,13 +19,13 @@ class StudyRepository {
 
   StudyRepository(this._db);
 
-  /// 生成当日学习队列：到期的复习词在前（保持到期顺序），
-  /// 新词（最多 [newLimit] 个）在后；[shuffleNewWords] 为 true 时新词随机打乱。
+  /// 生成当日学习队列：到期的复习词 + 新词（最多 [newLimit] 个）。
+  /// [shuffle] 为 true 时整个队列随机打乱（复习词与新词混合，随机感更强）。
   Future<List<StudyCard>> getTodayQueue(
     String bookId, {
     int newLimit = 20,
     DateTime? now,
-    bool shuffleNewWords = true,
+    bool shuffle = true,
     Random? random,
   }) async {
     final db = await _db.database;
@@ -41,12 +41,11 @@ class StudyRepository {
         orderBy: 'id',
         limit: newLimit);
     // query 返回只读列表，需拷贝后才能 shuffle
-    final newCards = List.of(newRows);
-    if (shuffleNewWords) {
-      newCards.shuffle(random ?? Random());
+    final all = [...reviewRows, ...List.of(newRows)];
+    if (shuffle) {
+      all.shuffle(random ?? Random());
     }
 
-    final all = [...reviewRows, ...newCards];
     if (all.isEmpty) return const [];
 
     final wordIds = all.map((r) => r['word_id'] as int).toList();

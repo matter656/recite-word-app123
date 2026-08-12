@@ -44,7 +44,7 @@ class FakeStudyRepository extends StudyRepository {
   Future<List<StudyCard>> getTodayQueue(String bookId,
       {int newLimit = 20,
       DateTime? now,
-      bool shuffleNewWords = true,
+      bool shuffle = true,
       Random? random}) async {
     return _queue;
   }

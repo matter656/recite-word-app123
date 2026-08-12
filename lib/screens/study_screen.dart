@@ -16,8 +16,9 @@ class StudyScreen extends ConsumerStatefulWidget {
 }
 
 class _StudyScreenState extends ConsumerState<StudyScreen> {
-  List<StudyCard> _queue = const [];
-  int _index = 0;
+  List<StudyCard> _remaining = [];
+  int _total = 0;
+  bool _shuffle = true;
   bool _revealed = false;
   bool _loading = true;
   String? _error;
@@ -41,12 +42,13 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
       final queue = await repo.getTodayQueue(
         widget.bookId,
         newLimit: newLimit,
-        shuffleNewWords: shuffle,
+        shuffle: shuffle,
       );
       if (!mounted) return;
       setState(() {
-        _queue = queue;
-        _index = 0;
+        _remaining = List.of(queue);
+        _total = queue.length;
+        _shuffle = shuffle;
         _revealed = false;
         _loading = false;
       });
@@ -59,8 +61,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     }
   }
 
-  StudyCard? get _current =>
-      _index < _queue.length ? _queue[_index] : null;
+  StudyCard? get _current => _remaining.isEmpty ? null : _remaining.first;
 
   Future<void> _rate(int rating) async {
     final card = _current;
@@ -80,8 +81,16 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     }
     if (!mounted) return;
     setState(() {
-      _index += 1;
+      _remaining.removeAt(0);
+      // 乱序开启时：每出一张，剩余卡片重新洗牌，随机感更强
+      if (_shuffle && _remaining.isNotEmpty) {
+        _remaining.shuffle();
+      }
     });
+    // 学习数据已变化，通知统计页下次展示时刷新
+    ref.invalidate(bookStatsProvider);
+    ref.invalidate(streakProvider);
+    ref.invalidate(todayLearnedProvider);
   }
 
   @override
@@ -94,7 +103,7 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
             Center(
               child: Padding(
                 padding: const EdgeInsets.only(right: 16),
-                child: Text('${_index + 1} / ${_queue.length}'),
+                child: Text('${_total - _remaining.length + 1} / $_total'),
               ),
             ),
         ],
