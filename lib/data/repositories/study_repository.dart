@@ -34,7 +34,8 @@ class StudyRepository {
 
   StudyRepository(this._db);
 
-  /// 生成当日学习队列：到期的复习词 + 今日新词批次（最多 [newLimit] 个）。
+  /// 生成当日学习队列：只含今日新词批次（最多 [newLimit] 个）。
+  /// 复习词已分离到独立复习模块（见 [getReviewQueue]）。
   ///
   /// **批次固定**：今天第一次进入时从全词库随机抽样并持久化到
   /// `daily_new_words` 表，当天后续进入都读取同一批次（仅排除已学的），
@@ -48,13 +49,7 @@ class StudyRepository {
   }) async {
     final db = await _db.database;
     final refNow = now ?? DateTime.now();
-    final ts = refNow.millisecondsSinceEpoch;
     final today = _fmtDate(refNow);
-
-    final reviewRows = await db.query('card_states',
-        where: "book_id = ? AND status != 'new' AND due_date <= ?",
-        whereArgs: [bookId, ts],
-        orderBy: 'due_date, id');
 
     // ---- 今日新词批次（持久化，当天固定）----
     final daySeed =
@@ -96,13 +91,13 @@ class StudyRepository {
       newTotal = batchRows.length;
     }
 
-    // ---- 组装队列 ----
-    final all = [...reviewRows, ...batchStates];
+    // ---- 组装队列（纯新词）----
+    if (batchStates.isEmpty) {
+      return const StudyQueue(cards: [], newTotal: 0, reviewTotal: 0);
+    }
+    final all = List.of(batchStates);
     if (shuffle) {
       all.shuffle(random ?? Random());
-    }
-    if (all.isEmpty) {
-      return const StudyQueue(cards: [], newTotal: 0, reviewTotal: 0);
     }
 
     final wordIds = all.map((r) => r['word_id'] as int).toList();
@@ -122,8 +117,96 @@ class StudyRepository {
     return StudyQueue(
       cards: cards,
       newTotal: newTotal,
-      reviewTotal: reviewRows.length,
+      reviewTotal: 0,
     );
+  }
+
+  /// 今日到期复习队列（status != new 且 due_date <= now），按到期时间升序。
+  /// [bookId] 为空时返回全部词书的到期复习词。
+  Future<List<StudyCard>> getReviewQueue({
+    String? bookId,
+    DateTime? now,
+  }) async {
+    final db = await _db.database;
+    final ts = (now ?? DateTime.now()).millisecondsSinceEpoch;
+    final where = bookId == null
+        ? "status != 'new' AND due_date <= ?"
+        : "book_id = ? AND status != 'new' AND due_date <= ?";
+    final args = bookId == null ? [ts] : [bookId, ts];
+    final rows = await db.query('card_states',
+        where: where, whereArgs: args, orderBy: 'due_date, id');
+    return _toStudyCards(rows);
+  }
+
+  /// 今日到期复习词数量（角标用）。
+  Future<int> getReviewCount({DateTime? now}) async {
+    final db = await _db.database;
+    final ts = (now ?? DateTime.now()).millisecondsSinceEpoch;
+    final result = await db.rawQuery(
+        "SELECT COUNT(*) AS c FROM card_states WHERE status != 'new' AND due_date <= ?",
+        [ts]);
+    return result.first['c'] as int;
+  }
+
+  /// 每本书的今日到期复习词数量。
+  Future<Map<String, int>> getReviewCountByBook({DateTime? now}) async {
+    final db = await _db.database;
+    final ts = (now ?? DateTime.now()).millisecondsSinceEpoch;
+    final rows = await db.rawQuery(
+        "SELECT book_id, COUNT(*) AS c FROM card_states "
+        "WHERE status != 'new' AND due_date <= ? GROUP BY book_id",
+        [ts]);
+    return {for (final r in rows) r['book_id'] as String: r['c'] as int};
+  }
+
+  /// 学过的词（status != new），含单词与学习状态；可按词书过滤。
+  Future<List<StudyCard>> getLearnedWords({String? bookId}) async {
+    final db = await _db.database;
+    final where = bookId == null
+        ? "status != 'new'"
+        : "book_id = ? AND status != 'new'";
+    final args = bookId == null ? null : [bookId];
+    final rows = await db.query('card_states',
+        where: where,
+        whereArgs: args,
+        orderBy: 'last_reviewed_at DESC');
+    return _toStudyCards(rows);
+  }
+
+  /// 再学习：把词的 SM-2 状态重置（回到 learning、间隔清零、今天即可复习）。
+  Future<void> relearn(int wordId, {DateTime? now}) async {
+    final db = await _db.database;
+    final ts = now ?? DateTime.now();
+    await db.update(
+      'card_states',
+      {
+        'status': CardStatus.learning.value,
+        'ease_factor': 2.5,
+        'interval_days': 0,
+        'due_date': ts.millisecondsSinceEpoch,
+        'review_count': 0,
+        'last_reviewed_at': ts.millisecondsSinceEpoch,
+      },
+      where: 'word_id = ?',
+      whereArgs: [wordId],
+    );
+  }
+
+  Future<List<StudyCard>> _toStudyCards(List<Map<String, Object?>> rows) async {
+    final db = await _db.database;
+    if (rows.isEmpty) return const [];
+    final wordIds = rows.map((r) => r['word_id'] as int).toList();
+    final placeholders = List.filled(wordIds.length, '?').join(',');
+    final wordRows = await db.rawQuery(
+        'SELECT * FROM words WHERE id IN ($placeholders)', wordIds);
+    final wordsById = {for (final r in wordRows) r['id'] as int: Word.fromMap(r)};
+    return rows
+        .where((r) => wordsById.containsKey(r['word_id'] as int))
+        .map((r) => StudyCard(
+              word: wordsById[r['word_id'] as int]!,
+              state: CardState.fromMap(r),
+            ))
+        .toList();
   }
 
   static String _fmtDate(DateTime d) =>

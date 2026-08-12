@@ -55,33 +55,70 @@ void main() {
     expect(queue.cards.every((c) => c.state.status == CardStatus.newWord), isTrue);
   });
 
-  test('复习词优先于新词', () async {
+  test('学习队列不含复习词（彻底分离）', () async {
     final seeded = await seed();
-    // alpha 学过一次并到期（直接改库模拟）
+    // alpha 学过一次并到期
     final db = await appDb.database;
     final alpha = seeded.first;
     await db.update('card_states',
         {'status': 'learning', 'due_date': fixedNow.subtract(const Duration(days: 1)).millisecondsSinceEpoch},
         where: 'word_id = ?', whereArgs: [alpha.$2]);
 
+    // 学习队列：只有新词，alpha 不出现在其中
     final queue = await studyRepo.getTodayQueue('cet4',
         newLimit: 2, now: fixedNow, shuffle: false);
-    expect(queue.cards.length, 3);
-    expect(queue.cards.first.word.word, 'alpha'); // 复习词在前（关闭乱序时）
-    expect(queue.cards.first.state.status, CardStatus.learning);
+    expect(queue.cards.every((c) => c.state.status == CardStatus.newWord), isTrue);
+    expect(queue.cards.any((c) => c.word.id == alpha.$2), isFalse);
+
+    // 复习队列：alpha 在其中
+    final review = await studyRepo.getReviewQueue(now: fixedNow);
+    expect(review.any((c) => c.word.id == alpha.$2), isTrue);
   });
 
-  test('未到期复习词不进队列', () async {
+  test('复习队列按到期时间排序，未到期不进', () async {
     final seeded = await seed();
     final db = await appDb.database;
-    final alpha = seeded.first;
+    // alpha 昨天到期、beta 今天到期、gamma 明天到期
     await db.update('card_states',
-        {'status': 'reviewing', 'due_date': fixedNow.add(const Duration(days: 1)).millisecondsSinceEpoch},
-        where: 'word_id = ?', whereArgs: [alpha.$2]);
+        {'status': 'learning', 'due_date': fixedNow.subtract(const Duration(days: 1)).millisecondsSinceEpoch},
+        where: 'word_id = ?', whereArgs: [seeded[0].$2]);
+    await db.update('card_states',
+        {'status': 'learning', 'due_date': fixedNow.millisecondsSinceEpoch},
+        where: 'word_id = ?', whereArgs: [seeded[1].$2]);
+    await db.update('card_states',
+        {'status': 'learning', 'due_date': fixedNow.add(const Duration(days: 1)).millisecondsSinceEpoch},
+        where: 'word_id = ?', whereArgs: [seeded[2].$2]);
 
-    final queue = await studyRepo.getTodayQueue('cet4', newLimit: 2, now: fixedNow);
-    expect(queue.cards.every((c) => c.state.status == CardStatus.newWord), isTrue);
-    expect(queue.cards.length, 2);
+    final review = await studyRepo.getReviewQueue(now: fixedNow);
+    expect(review.length, 2); // gamma 未到期
+    expect(review.first.word.word, 'alpha'); // 更早到期在前
+    expect(review[1].word.word, 'beta');
+    expect(await studyRepo.getReviewCount(now: fixedNow), 2);
+  });
+
+  test('再学习：重置 SM-2 状态，今天即可复习', () async {
+    final seeded = await seed();
+    final alpha = seeded.first;
+    await studyRepo.submitRating(alpha.$2, 2, now: fixedNow); // 变成 learning, due 明天
+    await studyRepo.relearn(alpha.$2, now: fixedNow);
+
+    final db = await appDb.database;
+    final state = (await db.query('card_states', where: 'word_id = ?', whereArgs: [alpha.$2])).first;
+    expect(state['status'], 'learning');
+    expect(state['ease_factor'], 2.5);
+    expect(state['interval_days'], 0);
+    expect(state['review_count'], 0);
+    // due = now → 今天即进入复习队列
+    expect(await studyRepo.getReviewCount(now: fixedNow), 1);
+  });
+
+  test('学过的词列表（含状态）', () async {
+    final seeded = await seed();
+    await studyRepo.submitRating(seeded[0].$2, 2, now: fixedNow);
+    final learned = await studyRepo.getLearnedWords();
+    expect(learned.length, 1);
+    expect(learned.first.word.word, seeded[0].$1);
+    expect(learned.first.state.status, CardStatus.learning);
   });
 
   test('评分记得：更新 card_state 并写 study_log', () async {
@@ -188,39 +225,24 @@ void main() {
         stable.cards.map((c) => c.word.word).toSet());
   });
 
-  test('关闭乱序：shuffle=false 时复习词在前、新词随机取样', () async {
-    final seeded = await seed();
-    final db = await appDb.database;
-    // alpha 设为到期的复习词
-    await db.update('card_states',
-        {'status': 'learning', 'due_date': fixedNow.subtract(const Duration(days: 1)).millisecondsSinceEpoch},
-        where: 'word_id = ?', whereArgs: [seeded[0].$2]);
-
+  test('关闭乱序：shuffle=false 时新词保持批次顺序（不含复习词）', () async {
+    await seed();
     final q = await studyRepo.getTodayQueue('cet4',
         newLimit: 3, now: fixedNow, shuffle: false);
-    expect(q.cards.length, 4); // 1 复习 + 3 新词
-    // 复习词固定在队首
-    expect(q.cards.first.word.word, 'alpha');
-    // 其余为新词
-    expect(q.cards.skip(1).every((c) => c.state.status == CardStatus.newWord), isTrue);
+    expect(q.cards.length, 3);
+    expect(q.cards.every((c) => c.state.status == CardStatus.newWord), isTrue);
+    // 关闭乱序时批次固定（与同一天重复查询的词集合一致）
+    final q2 = await studyRepo.getTodayQueue('cet4',
+        newLimit: 3, now: fixedNow, shuffle: false);
+    expect(q.cards.map((c) => c.word.word).toSet(),
+        q2.cards.map((c) => c.word.word).toSet());
   });
 
-  test('乱序打乱整个队列：复习词与新词混合，但词集合不变', () async {
-    final seeded = await seed();
-    final db = await appDb.database;
-    // alpha/beta 设为到期的复习词
-    await db.update('card_states',
-        {'status': 'learning', 'due_date': fixedNow.subtract(const Duration(days: 1)).millisecondsSinceEpoch},
-        where: 'word_id = ?', whereArgs: [seeded[0].$2]);
-    await db.update('card_states',
-        {'status': 'learning', 'due_date': fixedNow.subtract(const Duration(days: 1)).millisecondsSinceEpoch},
-        where: 'word_id = ?', whereArgs: [seeded[1].$2]);
-
+  test('乱序打乱学习队列：新词集合来自剩余新词池', () async {
+    await seed();
     final q = await studyRepo.getTodayQueue('cet4',
-        newLimit: 5, now: fixedNow, shuffle: true, random: Random(1));
-    // 全部词都在（2 复习 + 3 新词 = 5）
-    expect(q.cards.length, 5);
-    final all = q.cards.map((c) => c.word.word).toSet();
-    expect(all, {'alpha', 'beta', 'gamma', 'delta', 'epsilon'});
+        newLimit: 3, now: fixedNow, shuffle: true, random: Random(1));
+    expect(q.cards.length, 3);
+    expect(q.cards.every((c) => c.state.status == CardStatus.newWord), isTrue);
   });
 }

@@ -5,11 +5,18 @@ import '../data/repositories/study_repository.dart';
 import '../providers/app_providers.dart';
 
 /// 卡片学习页：看词回忆 → 翻面看释义例句 → 三档自评。
+/// [reviewMode] 为 true 时加载复习队列（今日到期词），而非今日新词。
 class StudyScreen extends ConsumerStatefulWidget {
-  final String bookId;
+  final String? bookId; // reviewMode 时为空表示复习全部词书
   final String bookName;
+  final bool reviewMode;
 
-  const StudyScreen({super.key, required this.bookId, required this.bookName});
+  const StudyScreen({
+    super.key,
+    this.bookId,
+    required this.bookName,
+    this.reviewMode = false,
+  });
 
   @override
   ConsumerState<StudyScreen> createState() => _StudyScreenState();
@@ -36,18 +43,30 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     });
     try {
       final repo = ref.read(studyRepositoryProvider);
+      if (widget.reviewMode) {
+        final review = await repo.getReviewQueue(bookId: widget.bookId);
+        if (!mounted) return;
+        setState(() {
+          _remaining = List.of(review);
+          _total = review.length;
+          _shuffle = false;
+          _revealed = false;
+          _loading = false;
+        });
+        return;
+      }
       final settings = ref.read(settingsRepositoryProvider);
       final newLimit = await settings.getDailyNewWords();
       final shuffle = await settings.getShuffleEnabled();
       final queue = await repo.getTodayQueue(
-        widget.bookId,
+        widget.bookId!,
         newLimit: newLimit,
         shuffle: shuffle,
       );
       if (!mounted) return;
       setState(() {
         _remaining = List.of(queue.cards);
-        _total = queue.total; // 新词批次（含已学）+ 今日到期复习词
+        _total = queue.total; // 今日新词批次（含已学）
         _shuffle = shuffle;
         _revealed = false;
         _loading = false;
@@ -87,17 +106,18 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
         _remaining.shuffle();
       }
     });
-    // 学习数据已变化，通知统计页下次展示时刷新
+    // 学习数据已变化，通知统计与复习角标刷新
     ref.invalidate(bookStatsProvider);
     ref.invalidate(streakProvider);
     ref.invalidate(todayLearnedProvider);
+    ref.invalidate(reviewCountProvider);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.bookName),
+        title: Text(widget.reviewMode ? '复习 · ${widget.bookName}' : widget.bookName),
         actions: [
           if (!_loading && _current != null)
             Center(

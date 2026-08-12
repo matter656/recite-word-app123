@@ -56,3 +56,7 @@ final todayLearnedProvider = FutureProvider<int>(
 final bookStatsProvider = FutureProvider(
     (ref) => ref.watch(statisticsRepositoryProvider).getBookStats());
 
+/// 今日到期复习词总数（角标）。
+final reviewCountProvider = FutureProvider<int>(
+    (ref) => ref.watch(studyRepositoryProvider).getReviewCount());
+
