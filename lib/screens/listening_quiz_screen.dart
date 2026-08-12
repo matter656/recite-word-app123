@@ -96,23 +96,26 @@ class _ListeningQuizScreenState extends ConsumerState<ListeningQuizScreen> {
     }
   }
 
-  /// 播放当前题目音频（单词或例句）。
+  /// 播放当前题目音频（单词用在线真人发音，例句用 TTS）。
   Future<void> _playQuestion(QuizQuestion q) async {
     setState(() => _speaking = true);
-    final text = widget.mode == ListeningQuizMode.word
-        ? q.correct.word
-        : (q.correct.exampleEn ?? q.correct.word);
-    final ok = await TtsService.speak(text);
-    if (!ok && mounted) {
-      _showTtsUnavailable();
+    var ok = false;
+    if (widget.mode == ListeningQuizMode.word) {
+      // 单词：在线真人发音（稳定，需网络）
+      ok = await WordAudioService.play(q.correct.word);
+      if (!ok && mounted) _showPlayError();
+    } else {
+      // 例句：TTS 朗读
+      ok = await TtsService.speak(q.correct.exampleEn ?? q.correct.word);
+      if (!ok && mounted) _showPlayError();
     }
     if (mounted) setState(() => _speaking = false);
   }
 
-  void _showTtsUnavailable() {
+  void _showPlayError() {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text('听不到声音？手机可能没有英文语音引擎。请到系统设置开启语音引擎后重试'),
-      duration: Duration(seconds: 4),
+      content: Text('发音播放失败：请检查网络连接（单词发音需要联网）'),
+      duration: Duration(seconds: 3),
     ));
   }
 

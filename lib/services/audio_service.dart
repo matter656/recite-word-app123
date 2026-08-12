@@ -3,6 +3,27 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
+/// 单词在线真人发音（有道词典音源，国内可访问）。
+/// 不依赖手机 TTS，稳定可靠；需要网络。
+class WordAudioService {
+  static final AudioPlayer _player = AudioPlayer();
+
+  /// 播放单词真人发音（美式）。返回是否已开始播放。
+  static Future<bool> play(String word) async {
+    final url = 'https://dict.youdao.com/dictvoice'
+        '?audio=${Uri.encodeComponent(word.trim())}&type=2';
+    try {
+      await _player.stop();
+      await _player.play(UrlSource(url));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> stop() => _player.stop();
+}
+
 /// TTS 朗读服务（手机系统文字转语音，离线）。
 class TtsService {
   static final FlutterTts _tts = FlutterTts();
@@ -61,7 +82,6 @@ class RecorderService {
   static final AudioRecorder _recorder = AudioRecorder();
   static final AudioPlayer _player = AudioPlayer();
   static String? _filePath;
-
   /// 是否有录音权限。
   static Future<bool> hasPermission() =>
       _recorder.hasPermission();
