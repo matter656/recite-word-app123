@@ -124,27 +124,40 @@ void main() {
         throwsA(isA<StateError>()));
   });
 
-  test('乱序学习：shuffle=true 时队列随机但集合不变', () async {
+  test('乱序学习：shuffle=true 时队列随机取样且都是新词', () async {
     await seed();
     final q1 = await studyRepo.getTodayQueue('cet4',
-        newLimit: 5, now: fixedNow, shuffle: true, random: Random(42));
+        newLimit: 3, now: fixedNow, shuffle: true, random: Random(42));
     final q2 = await studyRepo.getTodayQueue('cet4',
-        newLimit: 5, now: fixedNow, shuffle: true, random: Random(7));
-    final w1 = q1.map((c) => c.word.word).toList();
-    final w2 = q2.map((c) => c.word.word).toList();
-    expect(w1.toSet(), w2.toSet(), reason: '打乱后单词集合应不变');
-    expect(w1.length, 5);
-    // 不同种子大概率产生不同顺序
-    expect(w1, isNot(equals(w2)));
+        newLimit: 3, now: fixedNow, shuffle: true, random: Random(7));
+    expect(q1.length, 3);
+    expect(q2.length, 3);
+    // 取样全部来自 new 状态的词
+    for (final c in [...q1, ...q2]) {
+      expect(c.state.status, CardStatus.newWord);
+    }
+    // 随机取样：两次大概率不是同一批词（词库随机位置）
+    final w1 = q1.map((c) => c.word.word).toSet();
+    final w2 = q2.map((c) => c.word.word).toSet();
+    expect(w1.length, 3);
+    expect(w2.length, 3);
   });
 
-  test('关闭乱序：shuffle=false 时保持复习在前、新词按导入顺序', () async {
+  test('关闭乱序：shuffle=false 时复习词在前、新词随机取样', () async {
     final seeded = await seed();
+    final db = await appDb.database;
+    // alpha 设为到期的复习词
+    await db.update('card_states',
+        {'status': 'learning', 'due_date': fixedNow.subtract(const Duration(days: 1)).millisecondsSinceEpoch},
+        where: 'word_id = ?', whereArgs: [seeded[0].$2]);
+
     final q = await studyRepo.getTodayQueue('cet4',
-        newLimit: 5, now: fixedNow, shuffle: false);
-    final words = q.map((c) => c.word.word).toList();
-    // 无复习词时：新词按导入顺序（前 5 个）
-    expect(words, seeded.take(5).map((e) => e.$1).toList());
+        newLimit: 3, now: fixedNow, shuffle: false);
+    expect(q.length, 4); // 1 复习 + 3 新词
+    // 复习词固定在队首
+    expect(q.first.word.word, 'alpha');
+    // 其余为新词
+    expect(q.skip(1).every((c) => c.state.status == CardStatus.newWord), isTrue);
   });
 
   test('乱序打乱整个队列：复习词与新词混合，但词集合不变', () async {

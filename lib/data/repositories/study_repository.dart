@@ -35,10 +35,11 @@ class StudyRepository {
         where: "book_id = ? AND status != 'new' AND due_date <= ?",
         whereArgs: [bookId, ts],
         orderBy: 'due_date, id');
+    // 新词从整个词库随机抽样（避免每次都是词库开头的连续字母段）
     final newRows = await db.query('card_states',
         where: "book_id = ? AND status = 'new'",
         whereArgs: [bookId],
-        orderBy: 'id',
+        orderBy: 'RANDOM()',
         limit: newLimit);
     // query 返回只读列表，需拷贝后才能 shuffle
     final all = [...reviewRows, ...List.of(newRows)];
