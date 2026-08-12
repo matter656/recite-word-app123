@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -40,7 +42,10 @@ class FakeStudyRepository extends StudyRepository {
 
   @override
   Future<List<StudyCard>> getTodayQueue(String bookId,
-      {int newLimit = 20, DateTime? now}) async {
+      {int newLimit = 20,
+      DateTime? now,
+      bool shuffleNewWords = true,
+      Random? random}) async {
     return _queue;
   }
 

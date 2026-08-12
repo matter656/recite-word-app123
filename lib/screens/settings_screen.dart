@@ -15,6 +15,7 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   int _dailyNewWords = kDefaultDailyNewWords;
   bool _reminderEnabled = false;
+  bool _shuffleEnabled = true;
   TimeOfDay _reminderTime = const TimeOfDay(hour: 20, minute: 0);
   bool _loaded = false;
 
@@ -28,11 +29,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final repo = ref.read(settingsRepositoryProvider);
     final daily = await repo.getDailyNewWords();
     final enabled = await repo.getReminderEnabled();
+    final shuffle = await repo.getShuffleEnabled();
     final time = await repo.getReminderTime();
     if (!mounted) return;
     setState(() {
       _dailyNewWords = daily;
       _reminderEnabled = enabled;
+      _shuffleEnabled = shuffle;
       _reminderTime = time;
       _loaded = true;
     });
@@ -77,6 +80,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           : ListView(
               children: [
                 _section('学习'),
+                SwitchListTile(
+                  title: const Text('乱序学习'),
+                  subtitle: const Text('新词随机打乱顺序出现，避免固定顺序'),
+                  value: _shuffleEnabled,
+                  onChanged: (v) async {
+                    setState(() => _shuffleEnabled = v);
+                    await ref
+                        .read(settingsRepositoryProvider)
+                        .setShuffleEnabled(v);
+                  },
+                ),
                 ListTile(
                   title: const Text('每日新词数'),
                   subtitle: Text('每次学习新引入的单词上限：$_dailyNewWords 个'),

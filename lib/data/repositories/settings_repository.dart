@@ -9,6 +9,7 @@ class SettingsRepository {
   static const _kReminderEnabled = 'reminder_enabled';
   static const _kReminderHour = 'reminder_hour';
   static const _kReminderMinute = 'reminder_minute';
+  static const _kShuffleEnabled = 'shuffle_enabled';
 
   Future<int> getDailyNewWords() async {
     final prefs = await SharedPreferences.getInstance();
@@ -42,5 +43,16 @@ class SettingsRepository {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_kReminderHour, time.hour);
     await prefs.setInt(_kReminderMinute, time.minute);
+  }
+
+  /// 乱序学习开关（默认开启）。
+  Future<bool> getShuffleEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_kShuffleEnabled) ?? true;
+  }
+
+  Future<void> setShuffleEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kShuffleEnabled, enabled);
   }
 }

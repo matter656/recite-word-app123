@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../../core/sm2.dart';
 import '../../models/card_state.dart';
 import '../../models/word.dart';
@@ -17,11 +19,14 @@ class StudyRepository {
 
   StudyRepository(this._db);
 
-  /// 生成当日学习队列：到期的复习词在前，新词（最多 [newLimit] 个）在后。
+  /// 生成当日学习队列：到期的复习词在前（保持到期顺序），
+  /// 新词（最多 [newLimit] 个）在后；[shuffleNewWords] 为 true 时新词随机打乱。
   Future<List<StudyCard>> getTodayQueue(
     String bookId, {
     int newLimit = 20,
     DateTime? now,
+    bool shuffleNewWords = true,
+    Random? random,
   }) async {
     final db = await _db.database;
     final ts = (now ?? DateTime.now()).millisecondsSinceEpoch;
@@ -35,8 +40,13 @@ class StudyRepository {
         whereArgs: [bookId],
         orderBy: 'id',
         limit: newLimit);
+    // query 返回只读列表，需拷贝后才能 shuffle
+    final newCards = List.of(newRows);
+    if (shuffleNewWords) {
+      newCards.shuffle(random ?? Random());
+    }
 
-    final all = [...reviewRows, ...newRows];
+    final all = [...reviewRows, ...newCards];
     if (all.isEmpty) return const [];
 
     final wordIds = all.map((r) => r['word_id'] as int).toList();

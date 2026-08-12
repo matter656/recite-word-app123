@@ -35,11 +35,13 @@ class _StudyScreenState extends ConsumerState<StudyScreen> {
     });
     try {
       final repo = ref.read(studyRepositoryProvider);
-      final newLimit =
-          await ref.read(settingsRepositoryProvider).getDailyNewWords();
+      final settings = ref.read(settingsRepositoryProvider);
+      final newLimit = await settings.getDailyNewWords();
+      final shuffle = await settings.getShuffleEnabled();
       final queue = await repo.getTodayQueue(
         widget.bookId,
         newLimit: newLimit,
+        shuffleNewWords: shuffle,
       );
       if (!mounted) return;
       setState(() {

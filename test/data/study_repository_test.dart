@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:vocab_app/data/app_database.dart';
@@ -119,5 +121,49 @@ void main() {
   test('评分不存在的词抛错', () async {
     expect(() => studyRepo.submitRating(99999, 2, now: fixedNow),
         throwsA(isA<StateError>()));
+  });
+
+  test('乱序学习：shuffleNewWords=true 时新词顺序随机但集合不变', () async {
+    await seed();
+    final q1 = await studyRepo.getTodayQueue('cet4',
+        newLimit: 5, now: fixedNow, shuffleNewWords: true, random: Random(42));
+    final q2 = await studyRepo.getTodayQueue('cet4',
+        newLimit: 5, now: fixedNow, shuffleNewWords: true, random: Random(7));
+    final w1 = q1.map((c) => c.word.word).toList();
+    final w2 = q2.map((c) => c.word.word).toList();
+    expect(w1.toSet(), w2.toSet(), reason: '打乱后单词集合应不变');
+    expect(w1.length, 5);
+    // 不同种子大概率产生不同顺序
+    expect(w1, isNot(equals(w2)));
+  });
+
+  test('关闭乱序：shuffleNewWords=false 时保持导入顺序', () async {
+    final seeded = await seed();
+    final ordered = seeded.map((e) => e.$1).toList();
+    final q = await studyRepo.getTodayQueue('cet4',
+        newLimit: 5, now: fixedNow, shuffleNewWords: false);
+    final words = q.map((c) => c.word.word).toList();
+    expect(words, ordered.take(5).toList());
+  });
+
+  test('乱序只作用于新词，复习词保持到期顺序', () async {
+    final seeded = await seed();
+    final db = await appDb.database;
+    // alpha/beta 设为到期的复习词（不同到期时间），其余为新词
+    await db.update('card_states',
+        {'status': 'learning', 'due_date': fixedNow.subtract(const Duration(days: 2)).millisecondsSinceEpoch},
+        where: 'word_id = ?', whereArgs: [seeded[0].$2]);
+    await db.update('card_states',
+        {'status': 'learning', 'due_date': fixedNow.subtract(const Duration(days: 1)).millisecondsSinceEpoch},
+        where: 'word_id = ?', whereArgs: [seeded[1].$2]);
+
+    final q = await studyRepo.getTodayQueue('cet4',
+        newLimit: 5, now: fixedNow, shuffleNewWords: true, random: Random(1));
+    // 前两个必须是复习词，且按到期时间排序（alpha 更早到期在前）
+    expect(q[0].word.word, 'alpha');
+    expect(q[1].word.word, 'beta');
+    // 其余是新词（打乱）
+    expect(q.skip(2).map((c) => c.word.word).toSet(),
+        {'gamma', 'delta', 'epsilon'});
   });
 }
