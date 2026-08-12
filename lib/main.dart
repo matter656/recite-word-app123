@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers/app_providers.dart';
 import 'screens/main_shell.dart';
+import 'services/error_reporter.dart';
 import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await ErrorReporter.init();
   await NotificationService.init();
   runApp(const ProviderScope(child: VocabApp()));
 }
@@ -40,6 +42,8 @@ enum _BootstrapStatus { loading, error, done }
 
 class _BootstrapScreenState extends ConsumerState<BootstrapScreen> {
   _BootstrapStatus _status = _BootstrapStatus.loading;
+  String _lastError = '';
+  String _lastStack = '';
 
   @override
   void initState() {
@@ -57,14 +61,13 @@ class _BootstrapScreenState extends ConsumerState<BootstrapScreen> {
       if (!mounted) return;
       ref.invalidate(booksProvider);
       setState(() => _status = _BootstrapStatus.done);
-    } catch (e) {
+    } catch (e, s) {
       if (!mounted) return;
       _lastError = '$e';
+      _lastStack = '$s';
       setState(() => _status = _BootstrapStatus.error);
     }
   }
-
-  String _lastError = '';
 
   @override
   Widget build(BuildContext context) {
@@ -84,16 +87,48 @@ class _BootstrapScreenState extends ConsumerState<BootstrapScreen> {
         );
       case _BootstrapStatus.error:
         return Scaffold(
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text('初始化失败'),
-                const SizedBox(height: 8),
-                Text(_lastError, style: Theme.of(context).textTheme.bodySmall),
-                const SizedBox(height: 12),
-                FilledButton(onPressed: _bootstrap, child: const Text('重试')),
-              ],
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 24),
+                  Icon(Icons.error_outline,
+                      size: 56, color: Theme.of(context).colorScheme.error),
+                  const SizedBox(height: 12),
+                  Text('初始化失败',
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.center),
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    _lastError,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                  if (_lastStack.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: SelectableText(
+                        _lastStack,
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(fontFamily: 'monospace'),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  FilledButton(onPressed: _bootstrap, child: const Text('重试')),
+                ],
+              ),
             ),
           ),
         );

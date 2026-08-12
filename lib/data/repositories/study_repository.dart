@@ -46,6 +46,7 @@ class StudyRepository {
     final wordsById = {for (final r in wordRows) r['id'] as int: Word.fromMap(r)};
 
     return all
+        .where((r) => wordsById.containsKey(r['word_id'] as int))
         .map((r) => StudyCard(
               word: wordsById[r['word_id'] as int]!,
               state: CardState.fromMap(r),

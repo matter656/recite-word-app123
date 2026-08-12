@@ -1,5 +1,7 @@
 import 'package:path/path.dart' as p;
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite/sqflite.dart' as sqflite;
+import 'package:sqflite/sqflite.dart'
+    show Database, DatabaseFactory, OpenDatabaseOptions;
 
 /// 应用数据库：负责初始化与建表。
 ///
@@ -17,8 +19,10 @@ class AppDatabase {
   Future<Database> get database async => _db ??= await _open();
 
   Future<Database> _open() async {
-    final factory = databaseFactory ?? databaseFactory!;
-    final dbPath = path ?? p.join(await getDatabasesPath(), _dbName);
+    // 注意：字段 databaseFactory 会遮蔽 sqflite 的顶层 getter，
+    // 必须用库别名 sqflite.databaseFactory 引用全局默认实现。
+    final factory = databaseFactory ?? sqflite.databaseFactory;
+    final dbPath = path ?? p.join(await sqflite.getDatabasesPath(), _dbName);
     final db = await factory.openDatabase(dbPath, options: OpenDatabaseOptions(
       version: _dbVersion,
       onConfigure: (db) async {
