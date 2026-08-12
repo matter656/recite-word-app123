@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:vocab_app/data/app_database.dart';
 import 'package:vocab_app/data/repositories/study_repository.dart';
 import 'package:vocab_app/models/card_state.dart';
@@ -61,6 +62,10 @@ Widget buildApp(FakeStudyRepository repo) {
 }
 
 void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
   testWidgets('学习页：显示卡片正面，点击翻面显示释义与例句', (tester) async {
     final repo = FakeStudyRepository([
       StudyCard(word: makeWord(1, 'alpha'), state: makeState(1)),

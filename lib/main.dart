@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers/app_providers.dart';
-import 'screens/home_screen.dart';
+import 'screens/main_shell.dart';
+import 'services/notification_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService.init();
   runApp(const ProviderScope(child: VocabApp()));
 }
 
@@ -96,7 +98,7 @@ class _BootstrapScreenState extends ConsumerState<BootstrapScreen> {
           ),
         );
       case _BootstrapStatus.done:
-        return const HomeScreen();
+        return const MainShell();
     }
   }
 }

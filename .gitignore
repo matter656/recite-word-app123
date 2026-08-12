@@ -1,3 +1,5 @@
 .scratch/
 build/
 .dart_tool/
+android/app/key.properties
+android/app/*.keystore
