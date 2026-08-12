@@ -20,7 +20,9 @@ class StudyRepository {
   StudyRepository(this._db);
 
   /// 生成当日学习队列：到期的复习词 + 新词（最多 [newLimit] 个）。
-  /// [shuffle] 为 true 时整个队列随机打乱（复习词与新词混合，随机感更强）。
+  ///
+  /// 新词取样采用**稳定模式**：以日期为随机种子，同一天内抽到的词固定
+  /// （退出重进不换批），跨天自动变化。[shuffle] 为 true 时整个队列再随机打乱。
   Future<List<StudyCard>> getTodayQueue(
     String bookId, {
     int newLimit = 20,
@@ -29,20 +31,24 @@ class StudyRepository {
     Random? random,
   }) async {
     final db = await _db.database;
-    final ts = (now ?? DateTime.now()).millisecondsSinceEpoch;
+    final refNow = now ?? DateTime.now();
+    final ts = refNow.millisecondsSinceEpoch;
 
     final reviewRows = await db.query('card_states',
         where: "book_id = ? AND status != 'new' AND due_date <= ?",
         whereArgs: [bookId, ts],
         orderBy: 'due_date, id');
-    // 新词从整个词库随机抽样（避免每次都是词库开头的连续字母段）
+    // 新词稳定抽样：日期种子 → 同一天确定性，跨天变化；且从全词库随机位置取
     final newRows = await db.query('card_states',
         where: "book_id = ? AND status = 'new'",
         whereArgs: [bookId],
-        orderBy: 'RANDOM()',
-        limit: newLimit);
+        orderBy: 'id');
+    final daySeed =
+        refNow.year * 10000 + refNow.month * 100 + refNow.day;
+    final sampled = List.of(newRows)..shuffle(Random(daySeed));
+    final picked = sampled.take(newLimit).toList();
     // query 返回只读列表，需拷贝后才能 shuffle
-    final all = [...reviewRows, ...List.of(newRows)];
+    final all = [...reviewRows, ...picked];
     if (shuffle) {
       all.shuffle(random ?? Random());
     }

@@ -124,23 +124,41 @@ void main() {
         throwsA(isA<StateError>()));
   });
 
-  test('乱序学习：shuffle=true 时队列随机取样且都是新词', () async {
+  test('稳定模式：同一天内新词取样确定，跨天变化', () async {
     await seed();
-    final q1 = await studyRepo.getTodayQueue('cet4',
-        newLimit: 3, now: fixedNow, shuffle: true, random: Random(42));
-    final q2 = await studyRepo.getTodayQueue('cet4',
-        newLimit: 3, now: fixedNow, shuffle: true, random: Random(7));
-    expect(q1.length, 3);
-    expect(q2.length, 3);
-    // 取样全部来自 new 状态的词
-    for (final c in [...q1, ...q2]) {
+    final day1 = DateTime(2026, 8, 12, 10);
+    final day2 = DateTime(2026, 8, 13, 10);
+
+    final a1 = await studyRepo.getTodayQueue('cet4',
+        newLimit: 3, now: day1, shuffle: false);
+    final a2 = await studyRepo.getTodayQueue('cet4',
+        newLimit: 3, now: day1, shuffle: false);
+    // 同一天：抽到的词完全一致（稳定模式）
+    expect(a1.map((c) => c.word.word).toList(),
+        a2.map((c) => c.word.word).toList());
+    // 全部来自 new 状态
+    for (final c in a1) {
       expect(c.state.status, CardStatus.newWord);
     }
-    // 随机取样：两次大概率不是同一批词（词库随机位置）
-    final w1 = q1.map((c) => c.word.word).toSet();
-    final w2 = q2.map((c) => c.word.word).toSet();
-    expect(w1.length, 3);
-    expect(w2.length, 3);
+
+    final b = await studyRepo.getTodayQueue('cet4',
+        newLimit: 3, now: day2, shuffle: false);
+    // 跨天：换了一批（日期种子不同）
+    expect(b.map((c) => c.word.word).toList(),
+        isNot(a1.map((c) => c.word.word).toList()));
+  });
+
+  test('shuffle=true 时稳定取样的基础上整体打乱', () async {
+    await seed();
+    final day = DateTime(2026, 8, 12, 10);
+    final q = await studyRepo.getTodayQueue('cet4',
+        newLimit: 3, now: day, shuffle: true, random: Random(42));
+    expect(q.length, 3);
+    // 与同天关闭乱序时抽到的词是同一批（稳定模式），只是顺序不同
+    final stable = await studyRepo.getTodayQueue('cet4',
+        newLimit: 3, now: day, shuffle: false);
+    expect(q.map((c) => c.word.word).toSet(),
+        stable.map((c) => c.word.word).toSet());
   });
 
   test('关闭乱序：shuffle=false 时复习词在前、新词随机取样', () async {
