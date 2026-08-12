@@ -32,11 +32,12 @@ class _ShortArticleScreenState extends State<ShortArticleScreen> {
 
   Future<void> _playArticle() async {
     setState(() => _speaking = true);
-    final ok = await TtsService.speak(widget.article.text);
+    // 短文用在线发音（百度 TTS），稳定不依赖手机引擎
+    final ok = await SentenceAudioService.play(widget.article.text);
     if (!ok && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('听不到声音？手机可能没有英文语音引擎。请到系统设置开启语音引擎后重试'),
-        duration: Duration(seconds: 4),
+        content: Text('播放失败：请检查网络连接（短文朗读需要联网）'),
+        duration: Duration(seconds: 3),
       ));
     }
     if (mounted) setState(() => _speaking = false);

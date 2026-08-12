@@ -24,6 +24,26 @@ class WordAudioService {
   static Future<void> stop() => _player.stop();
 }
 
+/// 句子/短文在线发音（百度翻译 TTS，国内可访问、免费、支持长文本）。
+class SentenceAudioService {
+  static final AudioPlayer _player = AudioPlayer();
+
+  /// 播放句子/短文发音（英文）。返回是否已开始播放。
+  static Future<bool> play(String text) async {
+    final url = 'https://fanyi.baidu.com/gettts'
+        '?lan=en&text=${Uri.encodeComponent(text.trim())}&spd=3&source=web';
+    try {
+      await _player.stop();
+      await _player.play(UrlSource(url));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> stop() => _player.stop();
+}
+
 /// TTS 朗读服务：调用 Android 原生 TextToSpeech（绕开 flutter_tts 兼容问题）。
 class TtsService {
   static const _channel = MethodChannel('vocab_app/tts');
