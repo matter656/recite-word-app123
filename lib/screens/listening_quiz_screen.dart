@@ -102,8 +102,18 @@ class _ListeningQuizScreenState extends ConsumerState<ListeningQuizScreen> {
     final text = widget.mode == ListeningQuizMode.word
         ? q.correct.word
         : (q.correct.exampleEn ?? q.correct.word);
-    await TtsService.speak(text);
+    final ok = await TtsService.speak(text);
+    if (!ok && mounted) {
+      _showTtsUnavailable();
+    }
     if (mounted) setState(() => _speaking = false);
+  }
+
+  void _showTtsUnavailable() {
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      content: Text('听不到声音？手机可能没有英文语音引擎。请到系统设置开启语音引擎后重试'),
+      duration: Duration(seconds: 4),
+    ));
   }
 
   void _pick(Word option) {

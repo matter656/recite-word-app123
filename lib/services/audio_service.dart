@@ -7,19 +7,45 @@ import 'package:record/record.dart';
 class TtsService {
   static final FlutterTts _tts = FlutterTts();
   static bool _inited = false;
+  static bool _available = true; // 是否有可用的英文语音引擎
 
   static Future<void> init() async {
     if (_inited) return;
-    await _tts.setLanguage('en-US');
     await _tts.setSpeechRate(0.45);
     await _tts.setVolume(1.0);
+    try {
+      final langs = await _tts.getLanguages;
+      if (langs != null && langs.isNotEmpty) {
+        if (langs.contains('en-US')) {
+          await _tts.setLanguage('en-US');
+        } else if (langs.contains('en')) {
+          await _tts.setLanguage('en');
+        } else if (langs.any((l) => l.startsWith('en'))) {
+          await _tts
+              .setLanguage(langs.firstWhere((l) => l.startsWith('en')));
+        } else {
+          _available = false; // 没有英文语音引擎
+        }
+      } else {
+        await _tts.setLanguage('en-US');
+      }
+    } catch (_) {
+      _available = false;
+    }
     _inited = true;
   }
 
-  static Future<void> speak(String text) async {
+  /// 朗读文本；返回是否成功（引擎不可用或朗读失败返回 false）。
+  static Future<bool> speak(String text) async {
     await init();
-    await _tts.stop();
-    await _tts.speak(text);
+    if (!_available) return false;
+    try {
+      await _tts.stop();
+      final result = await _tts.speak(text);
+      return result == 1;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<void> stop() => _tts.stop();

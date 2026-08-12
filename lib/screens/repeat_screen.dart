@@ -90,7 +90,13 @@ class _RepeatScreenState extends ConsumerState<RepeatScreen> {
       _speaking = true;
       _selected = card;
     });
-    await TtsService.speak(card.word.word);
+    final ok = await TtsService.speak(card.word.word);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('听不到声音？手机可能没有英文语音引擎。请到系统设置开启语音引擎后重试'),
+        duration: Duration(seconds: 4),
+      ));
+    }
     if (mounted) setState(() => _speaking = false);
   }
 
