@@ -1,5 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter_tts/flutter_tts.dart';
+import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 
@@ -24,57 +24,39 @@ class WordAudioService {
   static Future<void> stop() => _player.stop();
 }
 
-/// TTS 朗读服务（手机系统文字转语音，离线）。
+/// TTS 朗读服务：调用 Android 原生 TextToSpeech（绕开 flutter_tts 兼容问题）。
 class TtsService {
-  static final FlutterTts _tts = FlutterTts();
-  static bool _available = true; // 是否有可用的英文语音引擎
+  static const _channel = MethodChannel('vocab_app/tts');
+  static bool _available = true;
+  static bool _inited = false;
 
-  /// 每次调用重新检测引擎（用户可能中途安装/切换语音引擎）。
+  /// 初始化原生 TTS 引擎（每次播放重新检测，用户可能切换引擎）。
   static Future<void> init() async {
     _available = true;
-    await _tts.setSpeechRate(0.45);
-    await _tts.setVolume(1.0);
+    _inited = true;
     try {
-      // 优先使用 Google TTS（英文支持最稳，用户可能刚安装）
-      try {
-        await _tts.setEngine('com.google.android.tts');
-      } catch (_) {
-        // 未安装 Google TTS 时忽略，使用系统默认引擎
-      }
-      final langs = await _tts.getLanguages;
-      if (langs != null && langs.isNotEmpty) {
-        if (langs.contains('en-US')) {
-          await _tts.setLanguage('en-US');
-        } else if (langs.contains('en')) {
-          await _tts.setLanguage('en');
-        } else if (langs.any((l) => l.startsWith('en'))) {
-          await _tts
-              .setLanguage(langs.firstWhere((l) => l.startsWith('en')));
-        } else {
-          _available = false; // 没有英文语音引擎
-        }
-      } else {
-        await _tts.setLanguage('en-US');
-      }
+      _available = await _channel.invokeMethod<bool>('init') ?? false;
     } catch (_) {
       _available = false;
     }
   }
 
-  /// 朗读文本；返回是否成功（引擎不可用或朗读失败返回 false）。
+  /// 朗读文本；返回是否成功。
   static Future<bool> speak(String text) async {
-    await init();
+    if (!_inited) await init();
     if (!_available) return false;
     try {
-      await _tts.stop();
-      final result = await _tts.speak(text);
-      return result == 1;
+      return await _channel.invokeMethod<bool>('speak', {'text': text}) ?? false;
     } catch (_) {
       return false;
     }
   }
 
-  static Future<void> stop() => _tts.stop();
+  static Future<void> stop() async {
+    try {
+      await _channel.invokeMethod('stop');
+    } catch (_) {}
+  }
 }
 
 /// 录音与回放服务（跟读对比用）。
@@ -82,6 +64,7 @@ class RecorderService {
   static final AudioRecorder _recorder = AudioRecorder();
   static final AudioPlayer _player = AudioPlayer();
   static String? _filePath;
+
   /// 是否有录音权限。
   static Future<bool> hasPermission() =>
       _recorder.hasPermission();
