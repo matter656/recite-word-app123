@@ -52,12 +52,13 @@ void main() {
     await seedWordIds();
     final stats = await statsRepo.getBookStats(now: day3);
     expect(stats.single.learned, 0);
+    expect(stats.single.learning, 0);
     expect(stats.single.due, 0);
     expect(stats.single.mastered, 0);
     expect(stats.single.progress, 0);
   });
 
-  test('学习后统计更新：已学、待复习、掌握', () async {
+  test('学习后统计更新：已学、学习中、待复习、掌握', () async {
     final ids = await seedWordIds();
     await studyRepo.submitRating(ids[0], 2, now: day1); // learning, 明天到期
     await studyRepo.submitRating(ids[1], 2, now: day2); // learning, 明天到期
@@ -65,7 +66,8 @@ void main() {
 
     final stats = await statsRepo.getBookStats(now: day3);
     expect(stats.single.learned, 3);
-    expect(stats.single.due, 3); // 三个都明天到期（day3+1）
+    expect(stats.single.learning, 3); // 学到一半
+    expect(stats.single.due, 3); // day1 学的（day2 到期）+ day2 学的（day3 到期）
     expect(stats.single.mastered, 0);
     expect(stats.single.progress, closeTo(1.0, 0.001));
   });

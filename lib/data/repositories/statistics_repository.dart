@@ -19,6 +19,10 @@ class StatisticsRepository {
       final learned = await db.rawQuery(
           "SELECT COUNT(*) AS c FROM card_states WHERE book_id = ? AND status != 'new'",
           [book.id]);
+      // 学习中：已学但未掌握（learning/reviewing）
+      final learning = await db.rawQuery(
+          "SELECT COUNT(*) AS c FROM card_states WHERE book_id = ? AND status IN ('learning', 'reviewing')",
+          [book.id]);
       final due = await db.rawQuery(
           "SELECT COUNT(*) AS c FROM card_states WHERE book_id = ? AND status != 'new' AND due_date <= ?",
           [book.id, ts]);
@@ -28,6 +32,7 @@ class StatisticsRepository {
       result.add(BookStats(
         book: book,
         learned: learned.first['c'] as int,
+        learning: learning.first['c'] as int,
         due: due.first['c'] as int,
         mastered: mastered.first['c'] as int,
       ));
@@ -76,12 +81,14 @@ class StatisticsRepository {
 class BookStats {
   final Book book;
   final int learned; // 已学（非 new 状态）
-  final int due; // 待复习
+  final int learning; // 学习中（learning/reviewing，学到一半）
+  final int due; // 待复习（今日到期）
   final int mastered; // 已掌握
 
   const BookStats({
     required this.book,
     required this.learned,
+    required this.learning,
     required this.due,
     required this.mastered,
   });

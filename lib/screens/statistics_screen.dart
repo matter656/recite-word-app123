@@ -146,10 +146,18 @@ class _BookProgressCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                _chip(context, '待复习 ${stats.due}', Colors.orange),
+                _chip(context, '学习中 ${stats.learning}', Colors.indigo),
+                const SizedBox(width: 8),
+                _chip(context, '今日待复习 ${stats.due}', Colors.orange),
                 const SizedBox(width: 8),
                 _chip(context, '已掌握 ${stats.mastered}', Colors.green),
               ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '今天学的词明天起进入「待复习」；连续 3 次记得且间隔 21 天后标记「已掌握」',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline),
             ),
           ],
         ),
